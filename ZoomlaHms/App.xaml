@@ -1,0 +1,52 @@
+﻿<Application x:Class="ZoomlaHms.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ZoomlaHms"
+             StartupUri="MainWindow.xaml"
+             Startup="Application_Startup" Exit="Application_Exit" DispatcherUnhandledException="Application_DispatcherUnhandledException">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+            </ResourceDictionary.MergedDictionaries>
+
+
+            <!--窗体阴影效果-->
+            <Style x:Key="window_Shadow" TargetType="{x:Type Window}">
+                <!--对象中心点用来定义所有RenderTransform变换中相对位置的的参考点,默认为图形的左上即(0,0),
+                    该属性值为相对值,介于 0 和 1 之间的值被解释为每对 x，y 轴中的当前元素的范围的因素-->
+                <!--<Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>-->
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Window}">
+                            <Grid Margin="10">
+                                <!--x:Static 引用中定义的任何静态的值的代码实体公共语言规范 (CLS)– 合规的方式。 引用的静态属性可以用于提供在 XAML 中属性的值
+                                  SystemColors 定义的所需的静态成员的类型的名称。
+                                  WindowBrushKey 使用WindowBrushKey创建对用于绘制窗口的客户端区域背景的画笔的动态引用。 如果更改画笔，将自动更新此动态引用。 若要创建的静态引用，不会自动更新，请使用WindowBrush。-->
+                                <Rectangle Name="rt" Fill="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
+                                    <Rectangle.Effect>
+                                        <!--DropShadowEffect是WPF中一个阴影效果的类
+                                            BlurRadius模糊半径属性，获取或设置阴影边缘的定义(阴影有多模糊)
+                                            ShadowDepth属性设置投影距纹理下方的距离
+                                            Color属性设置投影颜色-->
+                                        <DropShadowEffect BlurRadius="12" ShadowDepth="0" Color="#dee2e6"/>
+                                    </Rectangle.Effect>
+                                </Rectangle>
+                                <!--SnapsToDevicePixels获取或设置一个值，该值确定在呈现过程中，此元素的呈现是否应使用特定于设备的像素设置。 这是依赖项属性。-->
+                                <Border Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        Padding="{TemplateBinding Margin}"
+                                        SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                        CornerRadius="5">
+                                    <AdornerDecorator>
+                                        <ContentPresenter />
+                                    </AdornerDecorator>
+                                </Border>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

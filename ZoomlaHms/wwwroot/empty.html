@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html lang="zh-cn" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width: initial-scale=1.0">
+    <title>Index</title>
+    <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/common.css" rel="stylesheet" />
+    <link href="css/empty.css" rel="stylesheet" />
+    <link href="css/zico.css" rel="stylesheet" />
+</head>
+
+<body id="app">
+    <!-- 主体内容 -->
+    <div class="main">
+        <component v-bind:is="currentPage"></component>
+    </div>
+    <div class="loading" v-bind:class="loadingShow ? 'show' : ''"></div>
+</body>
+
+<script src="lib/vue/vue.global.prod.js"></script>
+<script>
+    if (!window.CSharp) {
+        window.CSharp = {
+            call: function() {
+                return {
+                    then: function() {},
+                };
+            }
+        };
+    }
+
+    (function() {
+        var prefix = "_";
+
+        window.csc = function(name, ...params) {
+            if (!window.CSharp || prefix == "_") {
+                return;
+            }
+
+            if (!name || !name.trim || !name.trim()) {
+                return;
+            }
+            name = name.substring(0, 1).toLowerCase() + name.substring(1);
+            
+            let argArr = [ prefix + "." + name ];
+            if (params && params.length) {
+                argArr.push.apply(argArr, params);
+            }
+
+            return CSharp.call.apply(window, argArr);
+        };
+        window.cscSetup = function(name) {
+            if (!name || !name.trim || !name.trim()) {
+                return;
+            }
+
+            prefix = name;
+            return !window.CSharp || prefix == "_";
+        };
+    })();
+
+    window.addEventListener("drop", function(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        //var files = this.files || ev.dataTransfer.files;
+        //console.log(files[0], window.webkitURL.createObjectURL(files[0]));
+    });
+    window.addEventListener("dragover", function(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+    });
+    window.addEventListener("dragenter", function(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+    });
+</script>
+<script type="module">
+    import { parse, compileTemplate, compileScript, compileStyle, rewriteDefault } from "./lib/vue/compiler-sfc.esm-browser.js";
+    function bootPage(url, mode) {
+        if (!url) {
+            return;
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
+                bootPageScound(url, xhr.responseText, mode);
+            }
+        };
+        xhr.open("get", "pages/" + url + ".vue");
+        xhr.send();
+    }
+    function bootPageScound(url, content, mode) {
+        const scopeId = "pages_" + url.replace(/\//g, "_").replace(/\B([A-Z])/g, '-$1').toLowerCase();
+        // 匹配CSS选择器的正则
+        const cssSelectorRegExp = /\s*([^\{\}]+)\s*(\{[^\{\}]*\})\s*/gm;
+        // 创建一个临时的DIV，让浏览器解析.vue组件内容
+        const contentDiv = document.createElement('div');
+        contentDiv.style.display = 'none';
+        contentDiv.innerHTML = content;
+        document.body.prepend(contentDiv);
+        // 提取模板中的样式字符串，为所有的选择器添加一个以组件名为类名的父选择器
+        const styleString = contentDiv
+            .querySelector('style')
+            .innerText.replace(cssSelectorRegExp, `.${scopeId} $1$2`);
+        // 将样式插入到文档head中
+        const style = document.createElement('style');
+        style.setAttribute("id", scopeId);
+        style.innerHTML = styleString;
+        const styleEl = document.getElementById(scopeId);
+        if (styleEl) {
+            styleEl.replaceWith(style);
+        } else {
+            document.head.appendChild(style);
+        }
+        // 解析完成后删除临时DIV
+        document.body.removeChild(contentDiv);
+        // 提取组件中的模板字符串，并在外面包裹一个带有组件类名的DIV，方便应用样式
+        const templateString = `<div class="${scopeId}">${contentDiv.querySelector('template').innerHTML}</div>`;
+        // 提取组件中的脚本字符串，将其中的模板占位符替换为模板内容
+        const scriptString = contentDiv
+            .querySelector('script')
+            .innerText.replace(/export default\s{0,}\{/, `export default { template: \`${templateString}\`,`)
+            .replace(/;\s*\n*$/gm, '');
+        const blob = new Blob([scriptString], { type: 'application/javascript' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        window.dispatchEvent(new CustomEvent("AppPageBooted", {
+            detail: {
+                url: url,
+                mode: mode,
+                name: url.replace(/\//g, "_"),
+                import: import(blobUrl),
+            }
+        }));
+    }
+
+    let pageStack = [];
+    const app = {
+        navigateTo: function(url) {
+            bootPage(url, "navigate");
+        },
+        navigateBack() {
+            if (pageStack.length <= 1) {
+                return;
+            }
+
+            bootPage(pageStack[pageStack.length - 2].url, "back");
+        },
+        redirectTo: function(url) {
+            bootPage(url, "redirect");
+        },
+        switchTo: function(url) {
+            bootPage(url, "tab");
+        },
+        showLoading() {
+            window.dispatchEvent(new CustomEvent("AppLoadingShow"));
+        },
+        hideLoading() {
+            window.dispatchEvent(new CustomEvent("AppLoadingHide"));
+        },
+    };
+    window.app = app;
+
+    const vueapp = Vue.createApp({
+        data() {
+            return {
+                currentPage: "test",
+                loadingShow: false,
+            };
+        },
+        mounted() {
+            const that = this;
+
+            window.addEventListener("AppLoadingShow", function(e) {
+                that.loadingShow = true;
+            });
+            window.addEventListener("AppLoadingHide", function(e) {
+                that.loadingShow = false;
+            });
+
+            window.addEventListener("AppPageBooted", function(ev) {
+                let route = {
+                    name: ev.detail.name,
+                    url: ev.detail.url
+                };
+                
+                if (pageStack.findIndex(curr => curr.name == route.name) == -1) {
+                    vueapp.component(route.name, Vue.defineAsyncComponent(() => ev.detail.import));
+                }
+
+                switch (ev.detail.mode) {
+                    case "tab":
+                        pageStack.splice(0, pageStack.length);
+                        pageStack.push(route);
+                        break;
+                    case "back":
+                        pageStack.splice(pageStack.length - 1);
+                        break;
+                    case "redirect":
+                        if (pageStack.length > 0) {
+                            pageStack.splice(pageStack.length - 1);
+                        }
+                        pageStack.push(route);
+                        break;
+                    case "navigate":
+                    default:
+                        pageStack.push(route);
+                        break;
+                }
+
+                if (that.currentPage != route.name) {
+                    cscSetup("_");
+                }
+                that.currentPage = route.name;
+            });
+
+            let purl = (location.href.split("?")[1] || "").split("&").find(curr => curr.startsWith("page="));
+            if (purl) {
+                purl = purl.split("=")[1] || "";
+                app.switchTo(purl);
+            }
+        },
+        methods: {
+        },
+    });
+    vueapp.mount("#app");
+</script>
+
+</html>
