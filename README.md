@@ -12,15 +12,7 @@
 <!-- /TOC -->
 
 
-<img src="images/bingd.png" />
-
-![图片名称](images/bingd.png)
-![图片名称](images/017.png)
-
-<video id="video" controls="" preload="none" poster="作者(图片地址)">
-<source id="mp4" src="images/1.mp4" type="video/mp4">
-</video>
-
+<img src="images/1.gif" />
 
 
 
