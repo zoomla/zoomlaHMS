@@ -17,44 +17,7 @@
 ![图片名称](images/bingd.png)
 ![图片名称](images/017.png)
 
-<style>
-.container {
-  width: 280px;
-  margin: 0 auto;
-  padding: 40px 0;
-  background-color: #f0f3f9;
-  animation: width 2s infinite alternate;
-}
-
-@keyframes width {
-  from { width: 200px; }
-  to { width: 280px; }
-}
-
-.textarea {
-  padding: 9px 8px;
-  border: 1px solid #d0d0d5;
-  border-radius: 4px;
-  background-color: #fff;  
-}
-
-.textarea > textarea {
-  width: 100%;
-  line-height: 20px;
-  padding: 0;
-  border: 0 none;
-  outline: 0 none;
-  background: none;
-  resize: none;
-}
-</style>
-
-
-<div class="container">
-  <div class="textarea">
-    <textarea rows="5" placeholder="文本内容，这里可以输入文本"></textarea>
-  </div>
-</div>
+<video src="images/1.mp4" width="300" controls autoplay />
 
 
 作者：owsieman
