@@ -6,6 +6,7 @@ body{display:flex; height:100vh;}
 .leftmenu_funcs_item{display:flex; align-items:center; padding:.5rem 1rem; margin-bottom:.375rem; border-radius:.25rem; cursor:pointer;}
 .leftmenu_funcs_item:hover,.leftmenu_funcs_item:focus{background:#e9ecef;}
 .leftmenu_funcs_item.active{box-shadow:0 0 .2rem 0 rgba(0,0,0, .15);}
+.leftmenu_funcs_item:last-child{margin-bottom:0;}
 .leftmenu_end{margin-top:auto; padding:1rem; font-size:.85rem; color:#6c757d;}
 .leftmenu_end span{margin:0 .15rem; cursor:pointer; text-decoration:underline; text-decoration-color:#adb5bd;}
 

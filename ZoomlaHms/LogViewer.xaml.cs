@@ -22,16 +22,34 @@ namespace ZoomlaHms
     /// </summary>
     public partial class LogViewer : Window
     {
-        private ObservableCollection<LogFile> files;
+        private static LogViewer[] _opend = new LogViewer[] { null };
+        private ObservableCollection<LogFile> files = new ObservableCollection<LogFile>();
 
         public LogViewer()
         {
-            this.Info("ctor", "LogViewer init.");
+            lock (_opend)
+            {
+                if (_opend[0] == null)
+                { _opend[0] = this; }
+                else
+                {
+                    _opend[0].Activate();
+                    Close();
+                    return;
+                }
+            }
+
+            Logging.Info("LogViewer init.");
             InitializeComponent();
 
-            this.Info("ctor", "Loading log file list...");
-            files = new ObservableCollection<LogFile>();
-            foreach (var item in Directory.GetFiles(SystemPath.AppLogsDirectory))
+            FileList.ItemsSource = files;
+        }
+
+        private void BuildFileList()
+        {
+            Logging.Info("Loading log file list...");
+            files.Clear();
+            foreach (var item in Directory.GetFiles(SystemPath.AppLogsDirectory, "*.log"))
             {
                 files.Add(new LogFile
                 {
@@ -39,18 +57,21 @@ namespace ZoomlaHms
                     Path = item,
                 });
             }
-            FileList.ItemsSource = files;
-            this.Info("ctor", "File list loaded successfully.");
+            Logging.Info("File list loaded successfully.");
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            this.Info(nameof(Window_Loaded), "LogViewer show.");
+            Logging.Info("LogViewer show.");
+            BuildFileList();
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
-            this.Info(nameof(Window_Closed), "LogViewer close.");
+            lock (_opend)
+            { _opend[0] = null; }
+
+            Logging.Info("LogViewer close.");
         }
 
         private void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -59,18 +80,18 @@ namespace ZoomlaHms
             if (logFile == null)
             { return; }
 
-            this.Info(nameof(ListViewItem_MouseDoubleClick), $"Loading contents of file '{logFile.Name}'...");
+            Logging.Info($"Loading contents of file '{logFile.Name}'...");
             if (!File.Exists(logFile.Path))
             {
-                this.Warning(nameof(ListViewItem_MouseDoubleClick), "The file has been moved or deleted.");
+                Logging.Warning("The file has been moved or deleted.");
                 MessageBox.Show(this, "日志文件已被移动或删除");
-                files.Remove(logFile);
+                BuildFileList();
                 return;
             }
 
             TextRange text = new TextRange(Content.Document.ContentStart, Content.Document.ContentEnd);
             text.Text = File.ReadAllText(logFile.Path);
-            this.Info(nameof(ListViewItem_MouseDoubleClick), $"Successfully loaded the contents of the file '{logFile.Name}'.");
+            Logging.Info($"Successfully loaded the contents of the file '{logFile.Name}'.");
         }
 
 

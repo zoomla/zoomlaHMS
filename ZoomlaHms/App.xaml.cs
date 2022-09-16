@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Input;
 using ZoomlaHms.Common;
 using System.Windows.Interop;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace ZoomlaHms
 {
@@ -20,6 +21,8 @@ namespace ZoomlaHms
     /// </summary>
     public partial class App : Application
     {
+        public static Window LastActivatedWindow { get; set; }
+
         private readonly KeyboardHook keyboardHook;
 
         public App()
@@ -28,7 +31,7 @@ namespace ZoomlaHms
             keyboardHook.OnKeyDownEvent += KeyboardHook_OnKeyDownEvent;
             keyboardHook.OnKeyUpEvent += KeyboardHook_OnKeyUpEvent;
 
-            this.Info("ctor", "CefSharp init.");
+            Logging.Info("CefSharp init.");
             var sett = new CefSettings();
             sett.CefCommandLineArgs.Add("--allow-file-access-from-files");
             sett.CefCommandLineArgs.Add("--disable-web-security");
@@ -36,7 +39,7 @@ namespace ZoomlaHms
 
             try
             {
-                this.Info("ctor", "Clear temporary file.");
+                Logging.Info("Clear temporary file.");
                 foreach (var item in System.IO.Directory.GetFileSystemEntries(SystemPath.TempFileDirectory))
                 {
                     if (System.IO.File.Exists(item))
@@ -47,25 +50,47 @@ namespace ZoomlaHms
             }
             catch (Exception ex)
             {
-                this.Error("ctor", "Cannot clear temporary file.", ex);
+                Logging.Error("Cannot clear temporary file.", ex);
             }
         }
 
+
+        public static Action<Action<CommonOpenFileDialog>> CreateOpenFileDialogInvoke(Action<CommonOpenFileDialog> setup = null)
+        {
+            var dialog = new CommonOpenFileDialog();
+            if (setup != null)
+            { setup(dialog); }
+
+            return new Action<Action<CommonOpenFileDialog>>(callback =>
+            {
+                (LastActivatedWindow ?? Current.MainWindow).Dispatcher.Invoke(() =>
+                {
+                    var dialog = new CommonOpenFileDialog();
+                    if (setup != null)
+                    { setup(dialog); }
+
+                    if (dialog.ShowDialog((LastActivatedWindow ?? Current.MainWindow)) == CommonFileDialogResult.Ok)
+                    { callback(dialog); }
+                });
+            });
+        }
+
+
         private void Application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
-            Logging.Error(sender, "<unknown>", "Unhandled exception.", e.Exception);
+            Logging.Error("Unhandled exception.", e.Exception);
         }
 
         private void Application_Exit(object sender, ExitEventArgs e)
         {
             keyboardHook.UnHook();
-            Logging.Info(sender, "<unknown>", "Application shutdown.\n");
+            Logging.Info("Application shutdown.\n");
             Logging.SyncLogToFile();
         }
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            Logging.Info(sender, "<unknown>", "Application startup.");
+            Logging.Info("Application startup.");
             keyboardHook.SetHook();
         }
 
@@ -230,46 +255,71 @@ namespace ZoomlaHms
 
         private void HandleHotKey()
         {
-            //ctrl + alt + 0: 唤起主窗体
+            //ctrl + alt + 0: 
             if ((ctrlL || ctrlR) && (altL || altR) && num0)
             {
-                if (Application.Current.MainWindow != null)
-                { Win32Api.SetWindowToForegroundWithAttachThreadInput(Application.Current.MainWindow); }
                 return;
             }
 
-            //ctrl + alt + 1: 主题包同步
+            //ctrl + alt + 1: 
             if ((ctrlL || ctrlR) && (altL || altR) && num1)
+            {
+                if (Current.MainWindow != null)
+                { Win32Api.SetWindowToForegroundWithAttachThreadInput(Current.MainWindow); }
+                return;
+            }
+
+            //ctrl + alt + 2: 
+            if ((ctrlL || ctrlR) && (altL || altR) && num2)
             {
                 new SingleModule("themepack/paksync") { Title = "主题包同步" };
                 return;
             }
 
-            //ctrl + alt + 2: 主题包推送
-            if ((ctrlL || ctrlR) && (altL || altR) && num2)
+            //ctrl + alt + 3: 
+            if ((ctrlL || ctrlR) && (altL || altR) && num3)
             {
                 new SingleModule("themepack/syncmobile") { Title = "手机推送工具" };
                 return;
             }
 
-            //ctrl + alt + 3: 主题包审计
-            if ((ctrlL || ctrlR) && (altL || altR) && num3)
+            //ctrl + alt + 4: 
+            if ((ctrlL || ctrlR) && (altL || altR) && num4)
             {
                 new SingleModule("extend/hwtviewer") { Title = "主题包审计" };
                 return;
             }
 
-            //ctrl + alt + 4: 主题打包
-            if ((ctrlL || ctrlR) && (altL || altR) && num4)
+            //ctrl + alt + 5: 
+            if ((ctrlL || ctrlR) && (altL || altR) && num5)
             {
                 new SingleModule("themepack/packit") { Title = "主题打包" };
                 return;
             }
 
-            //ctrl + alt + 5: 取色工具
-            if ((ctrlL || ctrlR) && (altL || altR) && num5)
+            //ctrl + alt + 6: 
+            if ((ctrlL || ctrlR) && (altL || altR) && num6)
             {
                 new SingleModule("extend/takecolor") { Title = "屏幕取色" };
+                return;
+            }
+
+            //ctrl + alt + 7: 
+            if ((ctrlL || ctrlR) && (altL || altR) && num7)
+            {
+                new SingleModule("themepack/syncmobile_cmd") { Title = "手机推送工具（命令行版）" };
+                return;
+            }
+
+            //ctrl + alt + 8: 
+            if ((ctrlL || ctrlR) && (altL || altR) && num8)
+            {
+                return;
+            }
+
+            //ctrl + alt + 9: 
+            if ((ctrlL || ctrlR) && (altL || altR) && num9)
+            {
                 return;
             }
         }

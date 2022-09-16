@@ -31,12 +31,12 @@ namespace ZoomlaHms
 
         public ZipViewer(string zipPath)
         {
-            this.Info("ctor", $"ZipViewer init with: {zipPath}");
+            Logging.Info($"ZipViewer init with: {zipPath}");
             InitializeComponent();
 
             if (!File.Exists(zipPath))
             {
-                this.Warning("ctor", "The file has been moved or deleted.");
+                Logging.Warning("The file has been moved or deleted.");
                 MessageBox.Show("文件已被删除或移动");
                 WindowState = WindowState.Minimized;
                 ShowInTaskbar = false;
@@ -58,18 +58,18 @@ namespace ZoomlaHms
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            this.Info(nameof(Window_Loaded), "ZipViewer show.");
+            Logging.Info("ZipViewer show.");
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
-            this.Info(nameof(Window_Loaded), "ZipViewer close.");
+            Logging.Info("ZipViewer close.");
             zip.Dispose();
             zipStream.Dispose();
 
             if (zipFilePath.StartsWith(SystemPath.TempFileDirectory))
             {
-                this.Info(nameof(Window_Loaded), "Clear temporary file.");
+                Logging.Info("Clear temporary file.");
                 File.Delete(zipFilePath);
             }
         }
@@ -77,7 +77,7 @@ namespace ZoomlaHms
 
         private void Init()
         {
-            this.Info(nameof(Init), "Load (or reload) zip file.");
+            Logging.Info("Load (or reload) zip file.");
             if (zip != null)
             { zip.Dispose(); }    
             if (zipStream != null)
@@ -131,7 +131,7 @@ namespace ZoomlaHms
                 return;
             }
 
-            this.Info(nameof(ListViewItem_MouseDoubleClick), "Preview file: " + data.Path);
+            Logging.Info("Preview file: " + data.Path);
             var tempFilePath = System.IO.Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@{data.Name}");
             using (var zipStream = zip.GetEntry(data.Path).Open())
             {
@@ -174,7 +174,7 @@ namespace ZoomlaHms
                 {
                     foreach (ZipFile item in FileList.SelectedItems)
                     {
-                        this.Info(nameof(FileList_KeyDown), "Delete file: " + item.Path);
+                        Logging.Info("Delete file: " + item.Path);
                         if (!item.IsDirectory)
                         {
                             zipArchive.GetEntry(item.Path)?.Delete();
@@ -214,7 +214,7 @@ namespace ZoomlaHms
                 using (ZipArchive zipArchive = new ZipArchive(fs, ZipArchiveMode.Update, true))
                 {
                     string baseZipPath = directory.Count == 0 ? string.Empty : string.Join("/", directory) + "/";
-                    this.Info(nameof(FileList_Drop), $"Add '{string.Join("','", dropList)}' to '{(string.IsNullOrEmpty(baseZipPath) ? "/" : baseZipPath)}'.");
+                    Logging.Info($"Add '{string.Join("','", dropList)}' to '{(string.IsNullOrEmpty(baseZipPath) ? "/" : baseZipPath)}'.");
                     foreach (var dropItem in dropList)
                     {
                         if (File.Exists(dropItem))
@@ -290,7 +290,7 @@ namespace ZoomlaHms
         private void BuildFileList()
         {
             string dir = directory.Count == 0 ? string.Empty : string.Join("/", directory.Reverse()) + "/";
-            this.Info(nameof(BuildFileList), $"List of files under '{(string.IsNullOrEmpty(dir) ? "/" : dir)}'.");
+            Logging.Info($"List of files under '{(string.IsNullOrEmpty(dir) ? "/" : dir)}'.");
 
             var dirList = new List<ZipFile>();
             var fileList = new List<ZipFile>();

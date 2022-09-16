@@ -5,7 +5,7 @@
             <div class="input-group">
                 <input name="projectPath" v-model="config.themeFolder" class="form-control" />
                 <button class="btn btn-outline-secondary" v-on:click="openThemeFolder"><i class="zi zi_floderOpen"></i></button>
-                <button class="btn btn-outline-secondary" v-on:click="openFile(config.themeFolder)"><i class="zi zi_externalLinkalt"></i></button>
+                <button class="btn btn-outline-secondary" v-on:click="openFile(config.themeFolder)"><i class="zi zi_eye"></i></button>
             </div>
         </div>
         <div class="mb-3">
@@ -13,7 +13,7 @@
             <div class="input-group">
                 <input name="exportPath" v-model="config.themeExportFolder" class="form-control" />
                 <button class="btn btn-outline-secondary" v-on:click="openThemeExportFolder"><i class="zi zi_floderOpen"></i></button>
-                <button class="btn btn-outline-secondary" v-on:click="openFile(config.themeExportFolder)"><i class="zi zi_externalLinkalt"></i></button>
+                <button class="btn btn-outline-secondary" v-on:click="openFile(config.themeExportFolder)"><i class="zi zi_eye"></i></button>
             </div>
         </div>
         <div class="mb-3">

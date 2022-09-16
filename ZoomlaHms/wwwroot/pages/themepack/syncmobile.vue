@@ -29,7 +29,7 @@
                 <div class="input-group">
                     <input v-model="config.themePackFile" class="form-control" />
                     <button class="btn btn-outline-secondary" v-on:click="choosePakFile"><i class="zi zi_floderOpen"></i></button>
-                    <button class="btn btn-outline-secondary" v-on:click="openFile(config.themePackFile)"><i class="zi zi_externalLinkalt"></i></button>
+                    <button class="btn btn-outline-secondary" v-on:click="openFile(config.themePackFile)"><i class="zi zi_eye"></i></button>
                 </div>
                 <small class="text-danger">主题包文件路径中不能有中文</small>
             </div>
@@ -52,7 +52,9 @@
                 <small class="text-danger">（推送路径中同样不能有中文）</small>
             </div>
             <div class="text-center position-relative">
+                <small class="text-muted" style="position:absolute; top:calc(50% - 1em / 2 - 1px); left:calc(50% - 17rem);" v-if="lastExec">最后推送：{{lastExec}}</small>
                 <button class="btn btn-info" v-on:click="pushFile"><i class="zi zi_syncalt"></i>推送文件</button>
+                <a href="javascript:;" class="small link-secondary fst-italic" style="position:absolute; bottom:0; right:6rem;" v-on:click="showLogs('now')">查看推送日志</a>
                 <a href="javascript:;" class="small link-secondary fst-italic" style="position:absolute; bottom:0; right:0;" v-on:click="isdev = true">开发者模式</a>
             </div>
 
@@ -63,6 +65,80 @@
                 <div>3、点击“手机推送路径”下输入框后的箭头按钮，选择对应的机型。或者点击后方“自动检测”按钮自动补全此字段。</div>
                 <div>4、点击最下方“推送文件”按钮推送主题包到手机。</div>
                 <div>5、在手机上打开“主题”APP，依次选择“我的”、“下载的主题”，找到你开发的主题，点击进入详情，最后点击主题详情下方的“应用”按钮即可。</div>
+            </div>
+        </div>
+
+        <!-- 选择设备 -->
+        <div class="modal" v-bind:class="deviceSel.show ? 'd-block' : ''">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">选择设备</h5>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-check" v-for="item in deviceSel.list" v-bind:key="item">
+                            <input type="radio" class="form-check-input" v-bind:value="item.id" v-model="deviceSel.sel" />
+                            <span class="form-check-label">{{item.device}}</span>
+                        </label>
+                        <div class="mt-3 d-flex">
+                            <div class="btn-group m-auto">
+                                <a href="javascript:;" class="btn btn-danger" v-on:click="deviceSelCancel">取消</a>
+                                <a href="javascript:;" class="btn btn-success" v-on:click="deviceSelConfirm">确定</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 推送日志 -->
+        <div class="modal modal-lg d-block" v-bind:class="pushLog.isreport ? 'modal-xl' : 'modal-lg'" v-if="pushLog.show">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content" v-if="!pushLog.isreport">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <span>{{pushLog.time}} 总计推送{{pushLog.list.length}}次</span>
+                            <a href="javascript:;" class="ms-3" style="font-size:.85rem;" v-on:click="showLogFiles">历史记录</a>
+                        </h5>
+                        <a href="javascript:;" class="btn-close" v-on:click="hideLogs"></a>
+                    </div>
+                    <div class="modal-body p-0" style="min-height:40vh;">
+                        <div class="pushlog" v-for="item in pushLog.list" v-bind:key="item">
+                            <div class="pushlog_time">{{item.time}}</div>
+                            <div class="pushlog_txt" v-bind:class="item.code ? 'success' : 'error'">
+                                <span>推送状态：</span>
+                                <span v-if="item.code">成功</span>
+                                <span v-else>失败</span>
+                            </div>
+                            <div class="pushlog_txt">
+                                <span>文件路径：</span>
+                                <span>{{item.source}}</span>
+                            </div>
+                            <div class="pushlog_txt">
+                                <span>手机路径：</span>
+                                <span>{{item.target}}</span>
+                            </div>
+                            <div class="pushlog_txt">
+                                <span>详细信息：</span>
+                                <span>{{item.message}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-content" v-else>
+                    <div class="modal-header">
+                        <h5 class="modal-title">近30天推送记录</h5>
+                        <a href="javascript:;" class="btn-close" v-on:click="hideLogs"></a>
+                    </div>
+                    <div class="modal-body" style="min-height:40vh;">
+                        <div class="d-flex flex-wrap align-items-start justify-content-start">
+                            <div class="pushlogfile" v-for="item in pushLog.reports" v-bind:key="item" v-on:click="showLogs(item.item1)"
+                                v-bind:style="{'background':'rgba(255,193,7, ' + (0.2 + 0.6 * item.rate) + ')'}">
+                                <p class="pushlogfile_name">{{item.item1}}</p>
+                                <span class="pushlogfile_lines">推送次数：{{item.item2}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -103,14 +179,34 @@
                 },
 
                 history: [],
+                timer: null,
                 cmd: "",
                 running: false,
                 executing: false,
-                timer: null,
+
+                lastExec: "",
                 isdev: false,
                 config: {
                     themePackFile: "",
                     mobileDirectory: "",
+                },
+                deviceSel: {
+                    show: false,
+                    list: [
+                        //{ device: "", id: 0 },
+                    ],
+                    sel: null,
+                    callback: null,
+                    failback: null,
+                },
+
+                pushLog: {
+                    show: false,
+                    time: "",
+                    list: [],
+
+                    isreport: false,
+                    reports: [],
                 },
             };
         },
@@ -142,10 +238,21 @@
                 }));
                 cmdH.show = true;
             },
+            "lastExec": function(n ,o) {
+                csc("SetLastPushTime", n);
+            },
         },
         mounted() {
             const that = this;
             cscSetup("PushPakToMobile");
+
+            csc("GetLastPushTime").then(res => {
+                if (res.startsWith("0")) {
+                    return;
+                }
+
+                that.lastExec = res;
+            });
 
             csc("IsRunning").then(res => {
                 that.running = res == "1";
@@ -352,6 +459,10 @@
                 });
             },
             getMobilePath() {
+                if (this.executing) {
+                    return;
+                }
+
                 app.showLoading();
                 if (!this.running) {
                     this.openTool();
@@ -377,21 +488,49 @@
                             if (resp) {
                                 if (resp.indexOf("No available devices") > -1) {
                                     app.hideLoading();
-                                    CSharp.prompt("未连接设备");
+                                    CSharp.prompt("[一般性例外]未连接设备，请将你的手机连接到电脑。");
                                     return;
                                 }
+
+                                let harr = resp.split("\n");
+                                if (harr.length == 2) {
+                                    timer = null;
+                                    _step(3, 0);
+                                    return;
+                                }
+
+                                let json = [];
+                                for (let i = 0; i < harr.length - 1; i++) {
+                                    let hitem = harr[i];
+                                    let idx = hitem.indexOf("]");
+                                    json.push({
+                                        id: hitem.substring(1, idx),
+                                        device: hitem.substring(idx + 1)
+                                    });
+                                }
+
+                                const deviceSel = that.deviceSel;
+                                deviceSel.sel = null;
+                                deviceSel.list.splice(0, deviceSel.list.length);
+                                deviceSel.list.push.apply(deviceSel.list, json);
+                                timer = null;
+                                deviceSel.callback = function(selres) {
+                                    _step(3, selres);
+                                };
+                                deviceSel.show = true;
+                                return;
                             } else {
                                 cmd = "connect";
                             }
                             break;
                         case 3:
-                            cmd = "0";
+                            cmd = resp;
                             break;
                         case 4:
                             if (resp) {
                                 if (resp.indexOf("No storage media found") > -1) {
                                     app.hideLoading();
-                                    CSharp.prompt("请调整手机USB连接方式为：传输文件");
+                                    CSharp.prompt("[一般性例外]请调整手机USB连接方式为：传输文件。");
                                     that.closeTool();
                                     return;
                                 }
@@ -421,7 +560,7 @@
                                     that.config.mobileDirectory = "/Huawei/Themes/";
                                     csc("SetMobileDirectory", "/Huawei/Themes/");
                                 } else {
-                                    CSharp.prompt("自动检测推送路径失败，连接的设备是否为华为系列手机？");
+                                    CSharp.prompt("[一般性例外]自动检测推送路径失败，连接的设备是否为华为系列手机？");
                                 }
                             } else {
                                 cmd = "dir /Huawei/Themes/";
@@ -446,7 +585,7 @@
                             clearInterval(timer);
                             let idx = that.history.findLastIndex(curr => curr == "#>" + cmd);
                             _step(step, that.history.slice(idx + 1, that.history.length).join("\n") || " ");
-                        }, 500);
+                        }, 650);
                     } else {
                         timer = null;
                         _step(step + 1, null);
@@ -460,6 +599,10 @@
                 }, 200);
             },
             pushFile(cfm) {
+                if (this.executing) {
+                    return;
+                }
+
                 const that = this;
                 app.showLoading();
                 if (!this.running) {
@@ -476,14 +619,17 @@
 
                         switch (res.toString()) {
                             case "-10":
-                                CSharp.prompt("未选择要推送的主题包");
+                                CSharp.prompt("[一般性例外]未选择要推送的主题包。");
+                                csc("AddPushLog", 0, "为选择主题包");
                                 break;
                             case "-11":
-                                CSharp.prompt("主题包已被删除或移动");
+                                CSharp.prompt("[一般性例外]主题包已被删除或移动。");
+                                csc("AddPushLog", 0, "主题包不存在");
                                 break;
                             case "-1000":
                             case "-1001":
-                                CSharp.prompt("推送路径格式错误");
+                                CSharp.prompt("[一般性例外]推送路径格式错误！");
+                                csc("AddPushLog", 0, "推送路径格式错误");
                                 break;
                             default:
                                 break;
@@ -512,21 +658,55 @@
                             if (resp) {
                                 if (resp.indexOf("No available devices") > -1) {
                                     app.hideLoading();
-                                    CSharp.prompt("未连接设备");
+                                    CSharp.prompt("[一般性例外]未连接设备，请将你的手机连接到电脑。");
+                                    csc("AddPushLog", 0, "未连接设备");
                                     return;
                                 }
+
+                                let harr = resp.split("\n");
+                                // alert(harr.length)
+                                if (harr.length == 2) {
+                                    timer = null;
+                                    _step(3, "0");
+                                    return;
+                                }
+
+                                let json = [];
+                                for (let i = 0; i < harr.length - 1; i++) {
+                                    let hitem = harr[i];
+                                    let idx = hitem.indexOf("]");
+                                    json.push({
+                                        id: hitem.substring(1, idx),
+                                        device: hitem.substring(idx + 1)
+                                    });
+                                }
+
+                                const deviceSel = that.deviceSel;
+                                deviceSel.sel = null;
+                                deviceSel.list.splice(0, deviceSel.list.length);
+                                deviceSel.list.push.apply(deviceSel.list, json);
+                                timer = null;
+                                deviceSel.failback = function() {
+                                    csc("AddPushLog", 0, "未选择推送设备。");
+                                };
+                                deviceSel.callback = function(selres) {
+                                    _step(3, selres);
+                                };
+                                deviceSel.show = true;
+                                return;
                             } else {
                                 cmd = "connect";
                             }
                             break;
                         case 3:
-                            cmd = "0";
+                            cmd = resp;
                             break;
                         case 4:
                             if (resp) {
                                 if (resp.indexOf("No storage media found") > -1) {
                                     app.hideLoading();
-                                    CSharp.prompt("请调整手机USB连接方式为：传输文件");
+                                    CSharp.prompt("[一般性例外]请调整手机USB连接方式为：传输文件！");
+                                    csc("AddPushLog", 0, "手机USB连接方式为调整为“传输文件”");
                                     that.closeTool();
                                     return;
                                 }
@@ -563,8 +743,9 @@
                                     csc("SetMobileDirectory", "/Huawei/Themes/");
                                 } else {
                                     app.hideLoading();
-                                    CSharp.prompt("自动检测推送路径失败，连接的设备是否为华为系列手机？");
-                                    CSharp.prompt("你可以手动填写推送路径以绕过限制，注意路径以“/”开头以及结尾");
+                                    CSharp.prompt("[一般性例外]自动检测推送路径失败，连接的设备是否为华为系列手机？");
+                                    CSharp.prompt("[普通消息]你可以手动填写推送路径以禁用自动检测，注意路径以“/”开头以及结尾。");
+                                    csc("AddPushLog", 0, "因未填写推送路径，已触发路径检测逻辑。但自动检测未成功，连接的设备可能不是华为系列手机。");
                                     return;
                                 }
                             } else {
@@ -576,13 +757,31 @@
                             break;
                         case 9:
                             if (resp) {
-                                if (resp.indexOf("File creation on device failed") > -1) {
-                                    CSharp.prompt("无法写入文件，推送失败");
+                                if (resp.indexOf("File already exists") > -1) {
+                                    timer = null;
+                                    _step(10, null);
                                     return;
                                 }
-                                if (resp.indexOf("File already exists") == -1) {
+                                if (resp.indexOf("File created successfully") > -1) {
                                     app.hideLoading();
-                                    CSharp.prompt("推送成功");
+                                    CSharp.prompt("[普通消息]推送成功，接下来只要在手机主题APP中应用主题即可测试效果。");
+                                    that.lastExec = now.getFullYear() + "-"
+                                        + (now.getMonth() + 1 < 10 ? "0" : "") + (now.getMonth() + 1) + "-"
+                                        + (now.getDate() < 10 ? "0" : "") + now.getDate()
+                                        + " "
+                                        + (now.getHours() < 10 ? "0" : "") + now.getHours() + ":"
+                                        + (now.getMinutes() < 10 ? "0" : "") + now.getMinutes() + ":"
+                                        + (now.getSeconds() < 10 ? "0" : "") + now.getSeconds();
+                                    csc("SetLastPushTime", that.lastExec);
+                                    csc("AddPushLog", 1, "推送成功。");
+                                    return;
+                                } else {
+                                    app.hideLoading();
+                                    CSharp.prompt("[一般性例外]文件传送失败，请再次推送！");
+                                    csc("AddPushLog", 0, "文件创建失败。");
+                                    setTimeout(() => {
+                                        that.closeTool();
+                                    }, 500);
                                     return;
                                 }
                             } else {
@@ -593,7 +792,16 @@
                             break;
                         case 10:
                             if (resp) {
-                                CSharp.prompt("推送成功");
+                                if (resp.indexOf("File write successful") > -1) {
+                                    CSharp.prompt("[普通消息]推送成功，接下来只要在手机主题APP中应用主题即可测试效果。");
+                                    csc("AddPushLog", 1, "推送成功。");
+                                } else {
+                                    CSharp.prompt("[一般性例外]文件传送失败，请再次推送！");
+                                    csc("AddPushLog", 0, "文件写入失败。");
+                                    setTimeout(() => {
+                                        that.closeTool();
+                                    }, 500);
+                                }
                             } else {
                                 let name = that.config.themePackFile.replace(/\\/g, "/");
                                 name = name.substring(name.lastIndexOf("/") + 1);
@@ -602,6 +810,15 @@
                             break;
                         default:
                             app.hideLoading();
+                            var now = new Date();
+                            that.lastExec = now.getFullYear() + "-"
+                                + (now.getMonth() + 1 < 10 ? "0" : "") + (now.getMonth() + 1) + "-"
+                                + (now.getDate() < 10 ? "0" : "") + now.getDate()
+                                + " "
+                                + (now.getHours() < 10 ? "0" : "") + now.getHours() + ":"
+                                + (now.getMinutes() < 10 ? "0" : "") + now.getMinutes() + ":"
+                                + (now.getSeconds() < 10 ? "0" : "") + now.getSeconds();
+                            csc("SetLastPushTime", that.lastExec);
                             return;
                     }
 
@@ -613,10 +830,20 @@
                                 return;
                             }
 
-                            clearInterval(timer);
                             let idx = that.history.findLastIndex(curr => curr == "#>" + cmd);
-                            _step(step, that.history.slice(idx + 1, that.history.length).join("\n") || " ");
-                        }, 500);
+                            if (cmd.startsWith("dir")) {
+                                clearInterval(timer);
+                                _step(step, that.history.slice(idx + 1, that.history.length).join("\n") || " ");
+                            } else {
+                                let ar = that.history.slice(idx + 1, that.history.length);
+                                if (!ar.length) {
+                                    return;
+                                }
+
+                                clearInterval(timer);
+                                _step(step, ar.join("\n") || " ");
+                            }
+                        }, 650);
                     } else {
                         timer = null;
                         _step(step + 1, null);
@@ -628,6 +855,143 @@
                         _step(1, null);
                     }
                 }, 200);
+            },
+
+            deviceSelCancel() {
+                const deviceSel = this.deviceSel;
+                deviceSel.show = false;
+                deviceSel.callback = null;
+                app.hideLoading();
+
+                this.cmd = "-1";
+                this.execCommand();
+
+                if (deviceSel.failback) {
+                    deviceSel.failback();
+                }
+            },
+            deviceSelConfirm() {
+                const deviceSel = this.deviceSel;
+                if (deviceSel.sel === null) {
+                    CSharp.prompt("[一般性例外]请选择设备");
+                    return;
+                }
+
+                deviceSel.show = false;
+                if (deviceSel.callback) {
+                    deviceSel.callback(deviceSel.sel.toString());
+                    deviceSel.callback = null;
+                }
+            },
+
+            showLogFiles() {
+                const that = this;
+                this.pushLog.show = false;
+                app.showLoading();
+
+                csc("GetPushLogFileList").then(res => {
+                    const pushLog = that.pushLog;
+
+                    var now = new Date();
+                    now.setMilliseconds(0);
+                    now.setSeconds(0);
+                    now.setMinutes(0);
+                    now.setHours(8);
+
+                    let arr = JSON.parse(res);
+                    let nowIdx = arr.findIndex(item => Date.parse(item.item1) == now.getTime());
+                    if (nowIdx > -1) {
+                        arr[nowIdx].item1 = "今日";
+                    } else {
+                        arr.push({
+                            item1: "今日",
+                            item2: 0,
+                        });
+                    }
+
+                    let max = 0;
+                    for (let i = 0; i < arr.length; i++) {
+                        const item = arr[i];
+                        if (item.item2 > max) {
+                            max = item.item2;
+                        }
+                    }
+                    for (let j = 0; j < arr.length; j++) {
+                        const item = arr[j];
+                        if (max == 0) {
+                            item.rate = 100;
+                            continue;
+                        }
+
+                        item.rate = item.item2 / max;
+                    }
+
+                    pushLog.reports.splice(0, pushLog.reports.length);
+                    pushLog.reports.push.apply(pushLog.reports, arr);
+
+                    pushLog.isreport = true;
+                    pushLog.show = true;
+                });
+            },
+            showLogs(time) {
+                const that = this;
+                this.pushLog.show = false;
+                app.showLoading();
+
+                var now = new Date();
+                now.setMilliseconds(0);
+                now.setSeconds(0);
+                now.setMinutes(0);
+                now.setHours(8);
+
+                if (time == "now" || time == "今日" || Date.parse(time) == now.getTime()) {
+                    this.pushLog.time = "今日";
+                } else {
+                    this.pushLog.time = time;
+                }
+                if (time == "今日") {
+                    time = "now";
+                }
+
+                csc("GetPushLog", time + "::string").then(res => {
+                    const pushLog = that.pushLog;
+
+                    pushLog.list.splice(0, pushLog.list.length);
+                    pushLog.list.push.apply(pushLog.list, JSON.parse(res).map(item => {
+                        let arr = item.split(",");
+                        let headAr = arr[0].split("=>");
+                        let time = headAr[0].trim();
+                        let message = headAr[1].trim();
+
+                        let obj;
+                        if (message.startsWith("推送成功")) {
+                            obj = {
+                                code: 1,
+                                time: time,
+                                message: message,
+                                source: arr[1].split("=")[1],
+                                target: arr[2].split("=")[1],
+                            };
+                        } else {
+                            obj = {
+                                code: 0,
+                                time: time,
+                                message: message,
+                                source: arr[1].split("=")[1],
+                                target: arr[2].split("=")[1],
+                            };
+                        }
+
+                        return obj;
+                    }));
+
+                    pushLog.isreport = false;
+                    pushLog.show = true;
+                });
+            },
+            hideLogs() {
+                app.hideLoading();
+                this.pushLog.show = false;
             },
         },
     }
@@ -670,4 +1034,30 @@
 .dronipt_list_item:hover{background:#e9ecef;}
 .dronipt_list_item:active{background:#dee2e6;}
 .dronipt_list_item>label{color:#0d6efd;}
+
+.pushlog{padding:1rem; border-bottom:1px solid #dee2e6;}
+.pushlog:last-child{border:none;}
+.pushlog_time{margin-bottom:.375rem; color:#0d6efd;}
+.pushlog_txt{display:flex; font-size:.85rem; word-break:break-all; word-wrap:break-word;}
+.pushlog_txt>span:first-child{flex-shrink:0; width:5rem; color:#6c757d;}
+.pushlog_txt>span:last-child{width:100%;}
+.pushlog_txt.success>span:last-child{color:green;}
+.pushlog_txt.error>span:last-child{color:red;}
+
+.pushlogfile{margin:0 .5rem .5rem 0; padding:.5rem 1rem; background:rgba(255,193,7, .2); border-radius:.25rem; cursor:pointer;}
+.pushlogfile_name{margin-bottom:0; font-weight:700; font-size:1.15rem;}
+.pushlogfile_lines{color:#495057;}
+
+@media (max-width:767px) {
+    .pushlogfile{width:calc(100% / 2 - .5rem + .5rem / 2);}
+    .pushlogfile:nth-child(2n){margin-right:0;}
+}
+@media (min-width:768px) and (max-width:991px) {
+    .pushlogfile{width:calc(100% / 3 - .5rem + .5rem / 3);}
+    .pushlogfile:nth-child(3n){margin-right:0;}
+}
+@media (min-width:992px) {
+    .pushlogfile{width:calc(100% / 4 - .5rem + .5rem / 4);}
+    .pushlogfile:nth-child(4n){margin-right:0;}
+}
 </style>

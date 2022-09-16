@@ -48,22 +48,22 @@ namespace ZoomlaHms.JsEvent
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                foreach (Window win in Application.Current.Windows)
+                if (App.LastActivatedWindow == null)
                 {
-                    if (win.IsActive)
-                    {
-                        MessageBox.Show(win, message);
-                        return;
-                    }
+                    PromptBox.Show(Application.Current.MainWindow, message, cancel: false);
+                    return;
                 }
 
-                MessageBox.Show(Application.Current.MainWindow, message);
+                PromptBox.Show(App.LastActivatedWindow, message, cancel: false);
             });
         }
 
         public object SayHello()
         {
-            MessageBox.Show("hello");
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                PromptBox.Show(Application.Current.MainWindow, "hello");
+            });
             return "hello";
         }
 
@@ -74,15 +74,24 @@ namespace ZoomlaHms.JsEvent
 
             try
             {
-                this.Info(nameof(OpenFile), $"Open file '{path}'.");
+                Logging.Info($"Open file '{path}'.");
+
+                string arg = string.Empty;
+                if (System.IO.Directory.Exists(path))
+                { arg = path; }
+                if (System.IO.File.Exists(path))
+                { arg = $"/select,{path}"; }
+                if (string.IsNullOrEmpty(arg))
+                { return; }
+
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer")
                 {
-                    Arguments = path,
+                    Arguments = arg,
                 });
             }
             catch (Exception ex)
             {
-                this.Error(nameof(OpenFile), $"Cannot open file '{path}'.", ex);
+                Logging.Error($"Cannot open file '{path}'.", ex);
             }
         }
 
@@ -93,7 +102,7 @@ namespace ZoomlaHms.JsEvent
 
             try
             {
-                this.Info(nameof(OpenUrl), $"Open url '{url}'.");
+                Logging.Info($"Open url '{url}'.");
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
                 {
                     UseShellExecute = true,
@@ -101,7 +110,7 @@ namespace ZoomlaHms.JsEvent
             }
             catch (Exception ex)
             {
-                this.Error(nameof(OpenUrl), $"Cannot open url '{url}'.", ex);
+                Logging.Error($"Cannot open url '{url}'.", ex);
             }
         }
 
@@ -113,7 +122,7 @@ namespace ZoomlaHms.JsEvent
                 if (names.Length != 2)
                 {
                     string msg = $"Invalid identity: {identity}.";
-                    this.Error(nameof(Call), msg);
+                    Logging.Error(msg);
                     return "ERROR:" + msg;
                 }
 
@@ -137,7 +146,7 @@ namespace ZoomlaHms.JsEvent
             }
             catch (Exception ex)
             {
-                this.Error(nameof(Call), $"Unable to handle '{identity}' event.", ex);
+                Logging.Error($"Unable to handle '{identity}' event.", ex);
                 return $"ERROR:{ex.Message}";
             }
         }

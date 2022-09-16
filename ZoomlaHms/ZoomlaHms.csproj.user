@@ -18,6 +18,9 @@
     <Compile Update="Policy.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="PromptBox.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="SingleModule.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -36,6 +39,9 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Update="Policy.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="PromptBox.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="SingleModule.xaml">

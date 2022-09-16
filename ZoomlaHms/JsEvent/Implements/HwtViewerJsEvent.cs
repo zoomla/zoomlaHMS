@@ -15,9 +15,8 @@ namespace ZoomlaHms.JsEvent.Implements
 
         public string ChooseFile()
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            App.CreateOpenFileDialogInvoke(dialog =>
             {
-                CommonFileDialog dialog = new CommonOpenFileDialog();
                 dialog.Filters.Add(new CommonFileDialogFilter("未加密的主题包", ".hwt"));
 
                 string initPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ThemeStudio\\workspace");
@@ -35,11 +34,9 @@ namespace ZoomlaHms.JsEvent.Implements
                     if (Directory.Exists(dirPath))
                     { dialog.InitialDirectory = dirPath; }
                 }
-
-                if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-                {
-                    SetFilePath(dialog.FileName);
-                }
+            }).Invoke(dialog =>
+            {
+                SetFilePath(dialog.FileName);
             });
 
             return filePath;

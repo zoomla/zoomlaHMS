@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ZoomlaHms.Common
 {
-    public class ZipDocument : IDisposable
+    public class ZipDocument : IZipDocument
     {
         private FileStream archiveStream;
         private ZipArchive archive;
@@ -29,6 +29,8 @@ namespace ZoomlaHms.Common
 
         public void Add(string path, string packPath)
         {
+            CheckDispose();
+
             path = path
                     .Replace('\\', Path.DirectorySeparatorChar)
                     .Replace('/', Path.DirectorySeparatorChar);
@@ -40,18 +42,14 @@ namespace ZoomlaHms.Common
             else if (Directory.Exists(path))
             {
                 AddDirectory(path, string.IsNullOrEmpty(packPath) ? string.Empty : packPath);
-                //AddDirectory(path, string.IsNullOrEmpty(packPath) ? path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1) : packPath);
+                //AddDirectory(path, string.IsNullOrEmpty(packPath) ? path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1).TrimEnd(Path.DirectorySeparatorChar) : packPath);
             }
         }
 
         private void AddFile(string path, string packPath)
         {
-            var entry = archive.GetEntry(packPath);
-            if (entry != null)
-            {
-                entry.Delete();
-            }
-            entry = archive.CreateEntry(packPath);
+            Delete(packPath);
+            var entry = archive.CreateEntry(packPath);
 
             using Stream entryStream = entry.Open();
             using var fileStream = File.OpenRead(path);
@@ -80,7 +78,7 @@ namespace ZoomlaHms.Common
                 AddDirectory(packDicPath, packPath + packDicPath.Substring(packDicPath.LastIndexOf(Path.DirectorySeparatorChar) + 1));
             }
 
-            if (fileList.Length == 0 && dirList.Length == 0)
+            if (fileList.Length == 0 && dirList.Length == 0 && !string.IsNullOrEmpty(packPath))
             {
                 var entry = archive.GetEntry(packPath);
                 if (entry != null)
@@ -92,6 +90,8 @@ namespace ZoomlaHms.Common
 
         public void Delete(string packPath)
         {
+            CheckDispose();
+
             if (packPath.EndsWith("/"))
             {
                 var list = new List<ZipArchiveEntry>();
@@ -113,24 +113,32 @@ namespace ZoomlaHms.Common
             entry.Delete();
         }
 
-        public void SaveChangesToFile()
+        public void Save()
         {
+            CheckDispose();
+
             archive.Dispose();
             archiveStream.Flush();
             archiveStream.Seek(0, SeekOrigin.Begin);
             archive = new ZipArchive(archiveStream, ZipArchiveMode.Update, true);
         }
 
-        public void SaveZipFileAs(string inZipPath, string outputPath)
+        public byte[] Get(string packPath)
         {
-            var entry = archive.GetEntry(inZipPath);
+            CheckDispose();
+
+            var entry = archive.GetEntry(packPath);
             if (entry == null)
-            { return; }
+            { return null; }
 
-            if (inZipPath.EndsWith("/"))
-            { return; }
+            if (packPath.EndsWith("/"))
+            { return null; }
 
+            using var entryStream = entry.Open();
+            byte[] result = new byte[entryStream.Length];
+            entryStream.Read(result);
 
+            return result;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -162,6 +170,12 @@ namespace ZoomlaHms.Common
             // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        private void CheckDispose()
+        {
+            if (disposedValue)
+                throw new InvalidOperationException("Object destroyed");
         }
     }
 }

@@ -22,6 +22,16 @@
                     <span>使用帮助</span>
                 </div>
             </div>
+            <div class="well_say" v-if="says">“{{says}}”</div>
+        </div>
+        <div class="cright">
+            <span>基于</span>
+            <a href="javascript:;" class="link-secondary" v-on:click="openUrl('https://ziti163.com/')">逐浪字库</a>
+            <span>与</span>
+            <a href="javascript:;" class="link-secondary" v-on:click="openUrl('https://ico.z01.com/')">zico图标</a>
+            <span>呈现∞</span>
+            <a href="javascript:;" class="link-secondary" v-on:click="openUrl('https://z01.com/')">Zoomla!逐浪CMS</a>
+            <span>官方技术支持</span>
         </div>
     </div>
 </template>
@@ -29,9 +39,19 @@
 <script>
     export default {
         data() {
-            return {};
+            return {
+                says: "",
+            };
         },
         mounted() {
+            const that = this;
+            cscSetup("Helpful");
+
+            this.getSay();
+            window.addEventListener("wellcome", this.getSay);
+        },
+        unmounted() {
+            window.removeEventListener("wellcome", this.getSay);
         },
         methods: {
             jump(url) {
@@ -43,12 +63,22 @@
             noop() {
                 CSharp.prompt("暂未开放");
             },
+            getSay() {
+                const that = this;
+
+                csc("GetSay").then(res => {
+                    that.says = res;
+                });
+            },
+            openUrl(url) {
+                CSharp.openUrl(url);
+            },
         },
     }
 </script>
 
 <style>
-.page{display:flex; justify-content:center; align-items:center; height:100vh; padding:1rem;}
+.page{display:flex; flex-flow:column; justify-content:center; align-items:center; height:100vh; padding:1rem;}
 .well_content{width:100%; max-width:600px; min-height:76vh;}
 .well_title{padding:1.5rem; font-size:1.5rem; text-align:center;}
 .well_quick_funcs{display:flex; justify-content:center;}
@@ -56,4 +86,8 @@
 .well_quick_funcs_item>.zi{font-size:2rem;}
 .well_quick_funcs_item:last-child{margin-right:0;}
 .well_quick_funcs_item:hover{color:#495057; background:#EEF1F3;}
+.well_say{margin-top:3rem; text-align:center; color:#6c757d; font-style:italic;}
+
+.cright{font-size:.85rem; color:#91989E;}
+.cright>a{margin:0 .1rem; color:inherit !important;}
 </style>

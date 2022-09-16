@@ -11,7 +11,7 @@
             <div class="input-group">
                 <input v-model="filePath" class="form-control bg-white" readonly />
                 <button class="btn btn-outline-secondary" v-on:click="chooseHwt"><i class="zi zi_floderOpen"></i></button>
-                <button class="btn btn-outline-secondary" v-on:click="openFile"><i class="zi zi_externalLinkalt"></i></button>
+                <button class="btn btn-outline-secondary" v-on:click="openFile"><i class="zi zi_eye"></i></button>
             </div>
         </div>
         <div class="dropane mb-3">

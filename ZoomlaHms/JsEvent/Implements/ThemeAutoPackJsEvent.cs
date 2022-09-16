@@ -1,6 +1,8 @@
-﻿using Microsoft.WindowsAPICodePack.Dialogs;
+﻿using Microsoft.VisualBasic;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,8 +16,16 @@ namespace ZoomlaHms.JsEvent.Implements
 {
     public class ThemeAutoPackJsEvent : ClassicJsEvent<ThemeAutoPackConfig>
     {
+        private static readonly string _loggerName = "ThemeAutoPack";
+
         private AbstractListener listener;
         private bool syncing = false;
+        private DateTime lastPack = DateTime.MinValue;
+
+        public ThemeAutoPackJsEvent()
+        {
+            Logging.RegisterLogger(_loggerName, "{time} => {message}");
+        }
 
         public override string SetConfig(string json)
         {
@@ -42,9 +52,8 @@ namespace ZoomlaHms.JsEvent.Implements
 
         public string ChooseThemeFolder()
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            App.CreateOpenFileDialogInvoke(dialog =>
             {
-                CommonOpenFileDialog dialog = new CommonOpenFileDialog();
                 dialog.IsFolderPicker = true;
                 if (string.IsNullOrEmpty(config.ThemeFolder) || !Directory.Exists(config.ThemeFolder))
                 {
@@ -58,12 +67,10 @@ namespace ZoomlaHms.JsEvent.Implements
                 {
                     dialog.InitialDirectory = config.ThemeFolder;
                 }
-
-                if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-                {
-                    config.ThemeFolder = dialog.FileName;
-                    config.SaveConfigToFile();
-                }
+            }).Invoke(dialog =>
+            {
+                config.ThemeFolder = dialog.FileName;
+                config.SaveConfigToFile();
             });
 
             return config.ThemeFolder;
@@ -71,10 +78,8 @@ namespace ZoomlaHms.JsEvent.Implements
 
         public string ChooseThemePackage()
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            App.CreateOpenFileDialogInvoke(dialog =>
             {
-                CommonFileDialog dialog = new CommonOpenFileDialog();
-
                 string initPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ThemeStudio\\workspace");
                 if (!Directory.Exists(initPath))
                 { initPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments); }
@@ -90,12 +95,10 @@ namespace ZoomlaHms.JsEvent.Implements
                     if (Directory.Exists(dirPath))
                     { dialog.InitialDirectory = dirPath; }
                 }
-
-                if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-                {
-                    config.ThemePackage = dialog.FileName;
-                    config.SaveConfigToFile();
-                }
+            }).Invoke(dialog =>
+            {
+                config.ThemePackage = dialog.FileName;
+                config.SaveConfigToFile();
             });
 
             return config.ThemePackage;
@@ -134,6 +137,7 @@ namespace ZoomlaHms.JsEvent.Implements
 
             if (listener != null)
             {
+                listener.Packaged -= Packaged;
                 listener.Dispose();
                 listener = null;
             }
@@ -162,9 +166,10 @@ namespace ZoomlaHms.JsEvent.Implements
 
             if (listener != null)
             {
+                listener.Packaged += Packaged;
                 listener.Start();
                 syncing = true;
-                this.Info(nameof(StartSync), $"Listener activated. Listener={listener.GetType().Name}; Project={config.ThemeFolder}; Package={config.ThemePackage}; Files={string.Join(',', config.PackFiles)}");
+                Logging.Info($"Listener activated. Listener={listener.GetType().Name}; Project={config.ThemeFolder}; Package={config.ThemePackage}; Files={string.Join(',', config.PackFiles)}");
                 return 1;
             }
             return -1;
@@ -190,7 +195,7 @@ namespace ZoomlaHms.JsEvent.Implements
             if (syncing)
             {
                 EventBridge.Insatance.Prompt("已启动自动打包流程，操作取消");
-                this.Warning(nameof(ManualSync), "Automatic process detected.");
+                Logging.Warning("Automatic process detected.");
                 return -1;
             }
 
@@ -222,15 +227,54 @@ namespace ZoomlaHms.JsEvent.Implements
                 return -1;
             }
 
-            this.Info(nameof(ManualSync), $"Packaging. Project={config.ThemeFolder}; Package={config.ThemePackage}; Files={string.Join(',', config.PackFiles)}");
+            Logging.Info($"Packaging. Project={config.ThemeFolder}; Package={config.ThemePackage}; Files={string.Join(',', config.PackFiles)}");
             new ManualListener(
                 config.ThemeFolder,
                 config.ThemePackage,
                 0,
                 config.PackFiles
             ).Start();
+            lastPack = DateTime.Now;
             return 1;
         }
+
+        public string GetPackagedTime() => lastPack.ToString("yyyy-MM-dd HH:mm:ss");
+        public long GetPackageSize() => File.Exists(config.ThemePackage) ? new FileInfo(config.ThemePackage).Length : -1;
+
+        public List<Tuple<string, int>> GetPackLogFileList()
+        {
+            var files = Logging.GetLogFileList(_loggerName);
+            List<Tuple<string, int>> fileList = new List<Tuple<string, int>>(files.Length);
+
+            foreach (var item in files)
+            {
+                fileList.Add(new Tuple<string, int>(Path.GetFileNameWithoutExtension(item), File.ReadAllLines(item).Length));
+            }
+
+            return fileList;
+        }
+
+        public string[] GetPackLog(string date)
+        {
+            if (string.IsNullOrEmpty(date) || date == "now")
+            { return Logging.FetchLogFromFile(module: _loggerName, count: -1); }
+
+            var vs = date.Split('-', StringSplitOptions.RemoveEmptyEntries);
+            if (vs.Length != 3)
+            { return Array.Empty<string>(); }
+
+            int year, month, day;
+            if (!int.TryParse(vs[0], out year) || year < 0)
+            { return Array.Empty<string>(); }
+            if (!int.TryParse(vs[1], out month) || month < 1 || month > 12)
+            { return Array.Empty<string>(); }
+            if (!int.TryParse(vs[2], out day) || day < 1 || day > 31)
+            { return Array.Empty<string>(); }
+
+            return Logging.FetchLogFromFile(_loggerName, new DateTime(year, month, day), -1);
+        }
+
+        private void Packaged() => lastPack = DateTime.Now;
 
 
         /// <summary>
@@ -244,6 +288,8 @@ namespace ZoomlaHms.JsEvent.Implements
             public string Target { get; }
             public int Sleep { get; }
             public string[] FileList { get; }
+
+            public event Action Packaged;
 
             public AbstractListener(string source, string target, int sleepSecond, string[] fileList)
             {
@@ -264,20 +310,20 @@ namespace ZoomlaHms.JsEvent.Implements
                 if (!Directory.Exists(Source))
                 {
                     EventBridge.Insatance.Prompt("主题项目已被删除或移动，请停止同步");
-                    this.Warning(nameof(Package), $"Theme project directory has been moved or deleted. Path={Source}");
+                    Logging.Warning($"Theme project directory has been moved or deleted. Path={Source}");
                     return;
                 }
                 if (!File.Exists(Target))
                 {
                     EventBridge.Insatance.Prompt("打包后的.hwt已被删除或移动，请停止同步");
-                    this.Warning(nameof(Package), $"Theme package file has been moved or deleted. Path={Target}");
+                    Logging.Warning($"Theme package file has been moved or deleted. Path={Target}");
                     return;
                 }
 
                 try
                 {
-                    this.Info(nameof(Package), $"Packaging. Project={Source}; Package={Target}; Files={string.Join(',', FileList)}");
-                    using ZipDocument zip = new ZipDocument(Target);
+                    Logging.Info($"Packaging. Project={Source}; Package={Target}; Files={string.Join(',', FileList)}");
+                    using IZipDocument zip = new ZipDocument(Target);
                     foreach (var item in FileList)
                     {
                         switch (item)
@@ -343,21 +389,42 @@ namespace ZoomlaHms.JsEvent.Implements
                                 break;
                         }
                     }
-                    zip.SaveChangesToFile();
-                    this.Info(nameof(Package), $"Packaging completed.");
+
+                    var xmlCntBytes = zip.Get("description.xml");
+                    if (xmlCntBytes != null && xmlCntBytes.Length > 0)
+                    {
+                        var xmlCnt = Encoding.UTF8.GetString(xmlCntBytes);
+                        if (!xmlCnt.Contains(SystemConstant.XmlAD))
+                        {
+                            xmlCnt += "\n" + SystemConstant.XmlAD;
+                            var xmlTempPath = Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@description.xml");
+                            File.WriteAllText(xmlTempPath, xmlCnt);
+                            zip.Add(xmlTempPath, "description.xml");
+                        }
+                    }
+
+                    zip.Save();
+                    Logging.Info($"Packaging completed.");
+                    Logging.Info(_loggerName, $"打包成功。,proj={Source},pack={Target},size={new FileInfo(Target).Length}");
                 }
                 catch (Exception ex)
                 {
-                    this.Error(nameof(Package), "Package cancelled.", ex);
+                    Logging.Error("Package cancelled.", ex);
+                    Logging.Error(_loggerName, $"打包失败。（原因：{ex.Message}）,proj={Source},pack={Target}");
+                }
+
+                if (Packaged != null)
+                {
+                    Packaged.Invoke();
                 }
             }
 
-
+            #region 各组件打包逻辑
             /// <summary>
             /// 万象小组件
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_widget(ZipDocument zip)
+            private void Pack_widget(IZipDocument zip)
             {
                 string modName = "theme-widget";
                 string modDir = Path.Combine(Source, modName);
@@ -372,7 +439,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 图标替换
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_icons(ZipDocument zip)
+            private void Pack_icons(IZipDocument zip)
             {
                 string modName = "icons";
                 string modDir = Path.Combine(Source, modName);
@@ -381,10 +448,10 @@ namespace ZoomlaHms.JsEvent.Implements
                 zip.Delete(modName);
 
                 string tempZipPath = Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@{modName}");
-                using (ZipDocument tempZip = new ZipDocument(tempZipPath))
+                using (IZipDocument tempZip = new ZipDocument(tempZipPath))
                 {
                     tempZip.Add(modDir);
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zip.Add(tempZipPath, modName);
@@ -394,7 +461,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 锁屏样式 - 动态锁屏
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_unlockDynamic(ZipDocument zip)
+            private void Pack_unlockDynamic(IZipDocument zip)
             {
                 string modName = "unlock-dynamic";
                 string modDir = Path.Combine(Source, modName);
@@ -409,7 +476,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 锁屏样式 - 杂志锁屏
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_unlockMagazine(ZipDocument zip)
+            private void Pack_unlockMagazine(IZipDocument zip)
             {
                 string modName = "unlock-magazine";
                 string modDir = Path.Combine(Source, modName);
@@ -424,7 +491,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 锁屏样式 - 滑动锁屏
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_unlockSlide(ZipDocument zip)
+            private void Pack_unlockSlide(IZipDocument zip)
             {
                 string modName = "unlock-slide";
                 string modDir = Path.Combine(Source, modName);
@@ -439,7 +506,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 锁屏样式 - 视频锁屏
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_unlockVideo(ZipDocument zip)
+            private void Pack_unlockVideo(IZipDocument zip)
             {
                 string modName = "unlock-video";
                 string modDir = Path.Combine(Source, modName);
@@ -454,7 +521,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 锁屏样式 - VR锁屏
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_unlockVr(ZipDocument zip)
+            private void Pack_unlockVr(IZipDocument zip)
             {
                 string modName = "unlock-vr";
                 string modDir = Path.Combine(Source, modName);
@@ -469,7 +536,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 桌面样式 - 手机
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_wallpaper(ZipDocument zip)
+            private void Pack_wallpaper(IZipDocument zip)
             {
                 string modName = "wallpaper";
                 string modDir = Path.Combine(Source, modName);
@@ -484,7 +551,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 桌面样式 - 平板
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_wallpaperTablet(ZipDocument zip)
+            private void Pack_wallpaperTablet(IZipDocument zip)
             {
                 string modName = "wallpaper-tablet";
                 string modDir = Path.Combine(Source, modName);
@@ -499,7 +566,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 桌面样式 - 折叠屏
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_wallpaperFoldable(ZipDocument zip)
+            private void Pack_wallpaperFoldable(IZipDocument zip)
             {
                 string modName = "wallpaper-foldable";
                 string modDir = Path.Combine(Source, modName);
@@ -514,7 +581,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 联系人模块样式
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_contacts(ZipDocument zip)
+            private void Pack_contacts(IZipDocument zip)
             {
                 string modName = "com.android.contacts";
                 string modDir = Path.Combine(Source, modName);
@@ -523,7 +590,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 zip.Delete(modName);
 
                 string tempZipPath = Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@{modName}");
-                using (ZipDocument tempZip = new ZipDocument(tempZipPath))
+                using (var tempZip = new ZipDocument2(tempZipPath))
                 {
                     string comres = "framework-res-hwext";
                     string comresDir = Path.Combine(Source, comres);
@@ -534,7 +601,8 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+
+                    tempZip.Save();
                 }
 
                 zip.Add(tempZipPath, modName);
@@ -544,7 +612,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 通话中界面样式
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_incallui(ZipDocument zip)
+            private void Pack_incallui(IZipDocument zip)
             {
                 string modName = "com.android.incallui";
                 string modDir = Path.Combine(Source, modName);
@@ -553,12 +621,12 @@ namespace ZoomlaHms.JsEvent.Implements
                 zip.Delete(modName);
 
                 string tempZipPath = Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@{modName}");
-                using (ZipDocument tempZip = new ZipDocument(tempZipPath))
+                using (IZipDocument tempZip = new ZipDocument(tempZipPath))
                 {
                     string comres = "framework-res-hwext";
                     tempZip.Add(modDir);
                     tempZip.Delete(comres + "/");
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zip.Add(tempZipPath, modName);
@@ -568,7 +636,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 短信模块样式
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_mms(ZipDocument zip)
+            private void Pack_mms(IZipDocument zip)
             {
                 string modName = "com.android.mms";
                 string modDir = Path.Combine(Source, modName);
@@ -577,18 +645,10 @@ namespace ZoomlaHms.JsEvent.Implements
                 zip.Delete(modName);
 
                 string tempZipPath = Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@{modName}");
-                using (ZipDocument tempZip = new ZipDocument(tempZipPath))
+                using (IZipDocument tempZip = new ZipDocument2(tempZipPath))
                 {
-                    string comres = "framework-res-hwext";
-                    string comresDir = Path.Combine(Source, comres);
-
                     tempZip.Add(modDir);
-                    if (Directory.Exists(comresDir))
-                    {
-                        tempZip.Delete(comres + "/");
-                        tempZip.Add(comresDir, comres);
-                    }
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zip.Add(tempZipPath, modName);
@@ -598,7 +658,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// com.android.phone
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_phone(ZipDocument zip)
+            private void Pack_phone(IZipDocument zip)
             {
                 string modName = "com.android.phone";
                 string modDir = Path.Combine(Source, modName);
@@ -607,7 +667,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 zip.Delete(modName);
 
                 string tempZipPath = Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@{modName}");
-                using (ZipDocument tempZip = new ZipDocument(tempZipPath))
+                using (IZipDocument tempZip = new ZipDocument(tempZipPath))
                 {
                     string comres = "framework-res-hwext";
                     string comresDir = Path.Combine(Source, comres);
@@ -618,7 +678,8 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+
+                    tempZip.Save();
                 }
 
                 zip.Add(tempZipPath, modName);
@@ -628,7 +689,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// com.android.server.telecom
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_telecom(ZipDocument zip)
+            private void Pack_telecom(IZipDocument zip)
             {
                 string modName = "com.android.server.telecom";
                 string modDir = Path.Combine(Source, modName);
@@ -637,7 +698,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 zip.Delete(modName);
 
                 string tempZipPath = Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@{modName}");
-                using (ZipDocument tempZip = new ZipDocument(tempZipPath))
+                using (IZipDocument tempZip = new ZipDocument(tempZipPath))
                 {
                     string comres = "framework-res-hwext";
                     string comresDir = Path.Combine(Source, comres);
@@ -648,7 +709,34 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+
+                    string appendPath = "res/drawable-xxhdpi";
+                    string cres = Path.Combine(comresDir, appendPath);
+                    string pres = Path.Combine(modDir, comres, appendPath);
+                    if (Directory.Exists(pres))
+                    {
+                        foreach (var item in Directory.GetFiles(pres))
+                        {
+                            string fileName = Path.GetFileName(item);
+
+                            var cfile = new FileInfo(Path.Combine(cres, fileName));
+                            if (!cfile.Exists)
+                            { continue; }
+                            var pfile = new FileInfo(item);
+                            if (pfile.Length == cfile.Length)
+                            { continue; }
+
+                            string zipFilePath = $"{comres}/{appendPath}/{fileName}";
+
+                            tempZip.Delete(zipFilePath);
+                            if (pfile.Length > cfile.Length)
+                            { tempZip.Add(item, zipFilePath); }
+                            else
+                            { tempZip.Add(cfile.FullName, zipFilePath); }
+                        }
+                    }
+
+                    tempZip.Save();
                 }
 
                 zip.Add(tempZipPath, modName);
@@ -658,7 +746,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 通知模块样式
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_systemui(ZipDocument zip)
+            private void Pack_systemui(IZipDocument zip)
             {
                 string modName = "com.android.systemui";
                 string modDir = Path.Combine(Source, modName);
@@ -667,7 +755,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 zip.Delete(modName);
 
                 string tempZipPath = Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@{modName}");
-                using (ZipDocument tempZip = new ZipDocument(tempZipPath))
+                using (IZipDocument tempZip = new ZipDocument(tempZipPath))
                 {
                     string comres = "framework-res-hwext";
                     string comresDir = Path.Combine(Source, comres);
@@ -678,7 +766,34 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+
+                    string appendPath = "res/drawable-xxhdpi";
+                    string cres = Path.Combine(comresDir, appendPath);
+                    string pres = Path.Combine(modDir, comres, appendPath);
+                    if (Directory.Exists(pres))
+                    {
+                        foreach (var item in Directory.GetFiles(pres))
+                        {
+                            string fileName = Path.GetFileName(item);
+
+                            var cfile = new FileInfo(Path.Combine(cres, fileName));
+                            if (!cfile.Exists)
+                            { continue; }
+                            var pfile = new FileInfo(item);
+                            if (pfile.Length == cfile.Length)
+                            { continue; }
+
+                            string zipFilePath = $"{comres}/{appendPath}/{fileName}";
+
+                            tempZip.Delete(zipFilePath);
+                            if (pfile.Length > cfile.Length)
+                            { tempZip.Add(item, zipFilePath); }
+                            else
+                            { tempZip.Add(cfile.FullName, zipFilePath); }
+                        }
+                    }
+
+                    tempZip.Save();
                 }
 
                 zip.Add(tempZipPath, modName);
@@ -688,7 +803,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// 桌面模块样式
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_launcher(ZipDocument zip)
+            private void Pack_launcher(IZipDocument zip)
             {
                 string modName = "com.huawei.android.launcher";
                 string modDir = Path.Combine(Source, modName);
@@ -697,7 +812,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 zip.Delete(modName);
 
                 string tempZipPath = Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@{modName}");
-                using (ZipDocument tempZip = new ZipDocument(tempZipPath))
+                using (IZipDocument tempZip = new ZipDocument(tempZipPath))
                 {
                     string comres = "framework-res-hwext";
                     string comresDir = Path.Combine(Source, comres);
@@ -708,7 +823,34 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+
+                    string appendPath = "res/drawable-xxhdpi";
+                    string cres = Path.Combine(comresDir, appendPath);
+                    string pres = Path.Combine(modDir, comres, appendPath);
+                    if (Directory.Exists(pres))
+                    {
+                        foreach (var item in Directory.GetFiles(pres))
+                        {
+                            string fileName = Path.GetFileName(item);
+
+                            var cfile = new FileInfo(Path.Combine(cres, fileName));
+                            if (!cfile.Exists)
+                            { continue; }
+                            var pfile = new FileInfo(item);
+                            if (pfile.Length == cfile.Length)
+                            { continue; }
+
+                            string zipFilePath = $"{comres}/{appendPath}/{fileName}";
+
+                            tempZip.Delete(zipFilePath);
+                            if (pfile.Length > cfile.Length)
+                            { tempZip.Add(item, zipFilePath); }
+                            else
+                            { tempZip.Add(cfile.FullName, zipFilePath); }
+                        }
+                    }
+
+                    tempZip.Save();
                 }
 
                 zip.Add(tempZipPath, modName);
@@ -718,7 +860,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// com.huawei.phone.recorder
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_recorder(ZipDocument zip)
+            private void Pack_recorder(IZipDocument zip)
             {
                 string modName = "com.huawei.phone.recorder";
                 string modDir = Path.Combine(Source, modName);
@@ -727,10 +869,10 @@ namespace ZoomlaHms.JsEvent.Implements
                 zip.Delete(modName);
 
                 string tempZipPath = Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@{modName}");
-                using (ZipDocument tempZip = new ZipDocument(tempZipPath))
+                using (IZipDocument tempZip = new ZipDocument(tempZipPath))
                 {
                     tempZip.Add(modDir);
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zip.Add(tempZipPath, modName);
@@ -740,7 +882,7 @@ namespace ZoomlaHms.JsEvent.Implements
             /// com.huawei.ohos.famanager
             /// </summary>
             /// <param name="zip"></param>
-            private void Pack_famanager(ZipDocument zip)
+            private void Pack_famanager(IZipDocument zip)
             {
                 string modName = "com.huawei.ohos.famanager";
                 string modDir = Path.Combine(Source, modName);
@@ -749,15 +891,18 @@ namespace ZoomlaHms.JsEvent.Implements
                 zip.Delete(modName);
 
                 string tempZipPath = Path.Combine(SystemPath.TempFileDirectory, $"{Guid.NewGuid():N}@{modName}");
-                using (ZipDocument tempZip = new ZipDocument(tempZipPath))
+                using (IZipDocument tempZip = new ZipDocument(tempZipPath))
                 {
                     tempZip.Add(modDir);
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zip.Add(tempZipPath, modName);
             }
+            #endregion
 
+
+            /*
             protected virtual void Dispose(bool disposing)
             {
                 if (!disposedValue)
@@ -772,6 +917,9 @@ namespace ZoomlaHms.JsEvent.Implements
                     disposedValue = true;
                 }
             }
+            */
+
+            protected abstract void Dispose(bool disposing);
 
             // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
             // ~AbstractListener()
@@ -817,7 +965,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 catch (Exception ex)
                 {
                     executing = false;
-                    this.Error(nameof(Timer_Elapsed), "AutoPack task failed.", ex);
+                    Logging.Error("AutoPack task failed.", ex);
                 }
             }
 
@@ -962,6 +1110,11 @@ namespace ZoomlaHms.JsEvent.Implements
             {
                 throw new NotImplementedException();
             }
+
+            protected override void Dispose(bool disposing)
+            {
+                disposedValue = true;
+            }
         }
     }
 
@@ -975,6 +1128,6 @@ namespace ZoomlaHms.JsEvent.Implements
         public string AutoRun { get; set; } = "inSecond";
         public int InSecondSleep { get; set; } = 5;
         public int WatchFileSleep { get; set; } = 5;
-        public string[] PackFiles { get; set; } = { "unlock" };
+        public string[] PackFiles { get; set; } = { "icons", "unlock-dynamic", "wallpaper", "widget" };
     }
 }

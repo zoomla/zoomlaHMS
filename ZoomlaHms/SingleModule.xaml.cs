@@ -54,13 +54,13 @@ namespace ZoomlaHms
             }
 
             page = url;
-            this.Info("ctor", $"SingleModule init with '{url}'.");
+            Logging.Info($"SingleModule init with '{url}'.");
             InitializeComponent();
 
             string indexFile = $"{SystemPath.WebRoot}\\empty.html";
             if (!System.IO.File.Exists(indexFile))
             {
-                this.Warning("ctor", "WebRoot directory is corrupt.");
+                Logging.Warning("WebRoot directory is corrupt.");
                 MessageBox.Show(Application.Current.MainWindow, "文件受损，请重新安装");
                 WindowState = WindowState.Minimized;
                 ShowInTaskbar = false;
@@ -86,12 +86,12 @@ namespace ZoomlaHms
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            this.Info(nameof(Window_Loaded), "SingleModule show.");
+            Logging.Info("SingleModule show.");
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
-            this.Info(nameof(Window_Closed), "SingleModule close.");
+            Logging.Info("SingleModule close.");
 
             lock (opened)
             {
@@ -112,15 +112,35 @@ namespace ZoomlaHms
             if (dropList.Count == 0)
             { return; }
 
-            Browser.EvaluateScriptAsync($"csc('SetFilePath', '{dropList[0].Replace("\\", "\\\\")}')").ContinueWith(state =>
+            try
             {
-                Browser.EvaluateScriptAsync("csc('OpenFile')");
-            });
+                Browser.EvaluateScriptAsync($"csc('SetFilePath', '{dropList[0].Replace("\\", "\\\\")}')").ContinueWith(state =>
+                {
+                    Browser.EvaluateScriptAsync("csc('OpenFile')");
+                });
+            }
+            catch
+            { }
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            Browser.EvaluateScriptAsync("csc('StopTake')");
+            try
+            {
+                Browser.EvaluateScriptAsync("csc('StopTake')");
+            }
+            catch
+            { }
+
+            if (App.LastActivatedWindow == this)
+            {
+                App.LastActivatedWindow = null;
+            }
+        }
+
+        private void Window_Activated(object sender, EventArgs e)
+        {
+            App.LastActivatedWindow = this;
         }
     }
 }

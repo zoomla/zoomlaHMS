@@ -83,6 +83,8 @@ namespace ZoomlaHms.JsEvent.Implements
                     proc.Kill();
                 }
             };
+
+            Logging.RegisterLogger(_loggerName, "{time} => {message}");
         }
 
         public List<string> GetHistory()
@@ -148,6 +150,20 @@ namespace ZoomlaHms.JsEvent.Implements
         {
             if (!running)
             { return; }
+
+            Monitor.Enter(historyOutput);
+            {
+                string hlst = historyOutput.Last();
+                if (hlst.StartsWith("MtpAccess>") && hlst.Length > 10)
+                {
+                    historyOutput.Enqueue("MtpAccess>" + command);
+                }
+                else
+                {
+                    historyOutput.Enqueue(historyOutput.Last() + command);
+                }
+            }
+            Monitor.Exit(historyOutput);
 
             proc.StandardInput.Write(command);
             proc.StandardInput.Write("\n");

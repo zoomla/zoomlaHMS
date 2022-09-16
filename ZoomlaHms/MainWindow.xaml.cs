@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -27,8 +28,11 @@ namespace ZoomlaHms
     {
         public MainWindow()
         {
-            this.Info("ctor", "MianWindow init.");
+            Logging.Info("MianWindow init.");
             InitializeComponent();
+            Title += SystemConstant.Version;
+            AppTitle.Content = Title;
+
             InitBrowser();
 
             if (!System.IO.File.Exists(System.IO.Path.Combine(SystemPath.StartupLocation, ".agreement")))
@@ -44,13 +48,13 @@ namespace ZoomlaHms
             //var layer = AdornerLayer.GetAdornerLayer(content);
             //layer.Add(new WindowResizeAdorner(content));
 
-            this.Info(nameof(Window_Loaded), "MianWindow show.");
+            Logging.Info("MianWindow show.");
             TopPane.DataContext = this;
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
-            this.Info(nameof(Window_Closed), "MianWindow close.");
+            Logging.Info("MianWindow close.");
         }
 
         #region 窗体事件
@@ -88,6 +92,30 @@ namespace ZoomlaHms
             DragMove();
         }
 
+
+        //跳转开源仓库
+        private void OpenSource_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://gitee.com/zoomla/zoomlaHMS")
+                {
+                    UseShellExecute = true,
+                });
+            }
+            catch (Exception) { }
+        }
+        private void OpenSource_PreviewTouchUp(object sender, TouchEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://gitee.com/zoomla/zoomlaHMS")
+                {
+                    UseShellExecute = true,
+                });
+            }
+            catch (Exception) { }
+        }
 
         //帮助按钮
         private void HelpButton_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -147,7 +175,7 @@ namespace ZoomlaHms
         }
         private void WindowClose()
         {
-            this.Info(nameof(WindowClose), "Shutdown application.");
+            Logging.Info("Shutdown application.");
             Application.Current.Shutdown();
         }
         #endregion
@@ -157,7 +185,7 @@ namespace ZoomlaHms
             string indexFile = $"{SystemPath.WebRoot}\\index.html";
             if (!System.IO.File.Exists(indexFile))
             {
-                this.Warning(nameof(InitBrowser), "WebRoot directory is corrupt.");
+                Logging.Warning("WebRoot directory is corrupt.");
                 MessageBox.Show(this, "文件受损，请重新安装");
                 return;
             }

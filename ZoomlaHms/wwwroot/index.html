@@ -25,20 +25,13 @@
             <div class="leftmenu_funcs_item" v-for="item in leftLinks" v-on:click="leftLinkClick(item)"
                 v-bind:class="item.active ? 'active' : ''"><i class="zi me-2" v-bind:class="item.ico"></i>{{item.name}}</div>
         </div>
-        <div class="leftmenu_end">
-            <div class="d-flex justify-content-between mb-1">
-                <span class="m-0" style="text-decoration:none;" v-on:click="openUrl('https://developer.huawei.com/consumer/cn/doc/distribution/content/themes-engine-overview-0000001054588463')">主题开发文档<i class="zi zi_externalLinkalt ms-1"></i></span>
-                <span class="m-0" style="text-decoration:none;" v-on:click="openUrl('https://developer.huawei.com/consumer/cn/doc/Tools-Library/theme_download-0000001050424897')">开发工具安装<i class="zi zi_externalLinkalt ms-1"></i></span>
-            </div>
-            <div>
-                <div>基于<span v-on:click="openUrl('https://ziti163.com/')">逐浪字库</span>与<span v-on:click="openUrl('https://ico.z01.com/')">zico图标</span>呈现</div>
-                <div><span v-on:click="openUrl('https://z01.com/')">Zoomla!逐浪CMS</span>官方技术支持</div>
-            </div>
+        <div style="height:220px;">
+            <img class="h-100 d-block m-auto" src="static/donate.jpg" />
         </div>
     </div>
     <!-- 主体内容 -->
     <div class="main">
-        <component v-bind:is="currentPage"></component>
+        <component ref="component" v-bind:is="currentPage"></component>
     </div>
     <div class="loading" v-bind:class="loadingShow ? 'show' : ''"></div>
 </body>
@@ -193,12 +186,14 @@
         data() {
             return {
                 leftLinks: [
-                    {name: "快速开始", href: "wellcome", ico: "zi_lightning", active: true},
-                    {name: "主题包同步", href: "themepack/paksync", ico: "zi_syncalt", active: false},
-                    {name: "手机推送工具", href: "themepack/syncmobile", ico: "zi_upload", active: false},
-                    {name: "主题包审计", href: "extend/hwtviewer", ico: "zi_dna", active: false},
-                    {name: "主题打包", href: "themepack/packit", ico: "zi_cubes", active: false},
-                    {name: "屏幕取色", href: "extend/takecolor", ico: "zi_Medicaldropper", active: false},
+                    {name: "快速开始 [1]", href: "wellcome", ico: "zi_lightning", active: true},
+                    {name: "主题同步 [2]", href: "themepack/paksync", ico: "zi_syncalt", active: false},
+                    {name: "推送工具 [3]", href: "themepack/syncmobile", ico: "zi_upload", active: false},
+                    {name: "出包审计 [4]", href: "extend/hwtviewer", ico: "zi_dna", active: false},
+                    {name: "主题打包 [5]", href: "themepack/packit", ico: "zi_cubes", active: false},
+                    {name: "屏幕取色 [6]", href: "extend/takecolor", ico: "zi_Medicaldropper", active: false},
+                    {name: "推送命令 [7]", href: "themepack/syncmobile_cmd", ico: "zi_terminal", active: false},
+                    {name: "使用帮助", href: "help", ico: "zi_lifering", active: false},
                 ],
                 currentPage: "test",
                 loadingShow: false,
@@ -248,6 +243,10 @@
                     cscSetup("_");
                 }
                 that.currentPage = route.name;
+
+                if (route.name == "wellcome") {
+                    window.dispatchEvent(new CustomEvent("wellcome"));
+                }
             });
 
             setTimeout(() => {
@@ -273,7 +272,7 @@
                 target.active = true;
 
                 if (target.href) {
-                    if (target.href == "wellcome") {
+                    if (target.href == "wellcome" || target.href == "help") {
                         app.switchTo(target.href);
                         return;
                     }

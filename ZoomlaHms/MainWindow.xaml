@@ -6,9 +6,9 @@
         xmlns:wpf="clr-namespace:CefSharp.Wpf;assembly=CefSharp.Wpf"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:ZoomlaHms"
-        mc:Ignorable="d" WindowStyle="None" MinWidth="800" MinHeight="600" Loaded="Window_Loaded" Closed="Window_Closed"
+        mc:Ignorable="d" WindowStyle="None" MinWidth="800" MinHeight="680" Loaded="Window_Loaded" Closed="Window_Closed"
         AllowsTransparency="True" ResizeMode="CanResizeWithGrip" Background="Transparent"
-        Title="逐浪HMS主题大师" Height="620" Width="1000" WindowStartupLocation="CenterScreen">
+        Title="逐浪HMS主题大师" Height="680" Width="1000" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -91,10 +91,32 @@
         <DockPanel DockPanel.Dock="Top" Height="{StaticResource TopHeight}" Background="#e9ecef">
             <DockPanel DockPanel.Dock="Left">
                 <Image Source="wwwroot/logo.png" Width="32" Margin="3 6 0 6" />
-                <Label FontSize="14" VerticalAlignment="Center">逐浪HMS主题大师 v0.0.1</Label>
+                <Label x:Name="AppTitle" FontSize="14" VerticalAlignment="Center"></Label>
             </DockPanel>
 
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" x:Name="TopButton">
+                <Button Style="{DynamicResource TopButton}" Width="50" PreviewMouseLeftButtonDown="OpenSource_PreviewMouseLeftButtonDown" PreviewTouchUp="OpenSource_PreviewTouchUp">
+                    <Image Width="20">
+                        <Image.Source>
+                            <DrawingImage>
+                                <DrawingImage.Drawing>
+                                    <GeometryDrawing>
+                                        <GeometryDrawing.Brush>
+                                            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                                <GradientStop Color="#495057" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </GeometryDrawing.Brush>
+                                        <GeometryDrawing.Geometry>
+                                            <GeometryGroup>
+                                                <PathGeometry Figures="M512 1024C229.222 1024 0 794.778 0 512S229.222 0 512 0s512 229.222 512 512-229.222 512-512 512z m259.149-568.883h-290.74a25.293 25.293 0 0 0-25.292 25.293l-0.026 63.206c0 13.952 11.315 25.293 25.267 25.293h177.024c13.978 0 25.293 11.315 25.293 25.267v12.646a75.853 75.853 0 0 1-75.853 75.853h-240.23a25.293 25.293 0 0 1-25.267-25.293V417.203a75.853 75.853 0 0 1 75.827-75.853h353.946a25.293 25.293 0 0 0 25.267-25.292l0.077-63.207a25.293 25.293 0 0 0-25.268-25.293H417.152a189.62 189.62 0 0 0-189.62 189.645V771.15c0 13.977 11.316 25.293 25.294 25.293h372.94a170.65 170.65 0 0 0 170.65-170.65V480.384a25.293 25.293 0 0 0-25.293-25.267z"/>
+                                            </GeometryGroup>
+                                        </GeometryDrawing.Geometry>
+                                    </GeometryDrawing>
+                                </DrawingImage.Drawing>
+                            </DrawingImage>
+                        </Image.Source>
+                    </Image>
+                </Button>
                 <!--帮助按钮-->
                 <Button Style="{DynamicResource TopButton}" Width="50" PreviewMouseLeftButtonDown="HelpButton_PreviewMouseLeftButtonUp" PreviewTouchUp="HelpButton_PreviewTouchUp">
                     <Image Width="18">

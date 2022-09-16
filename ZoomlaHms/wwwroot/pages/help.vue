@@ -2,7 +2,7 @@
     <div class="page">
         <div class="title">
             <label>ZoomLa HMS</label>
-            <span>HMS主题开发实用工具集</span>
+            <span v-on:click="test">HMS主题开发实用工具集</span>
         </div>
 
         <div class="content">
@@ -28,6 +28,8 @@
             <div class="content_item">
                 <label>其他</label>
                 <div class="hbtns">
+                    <a href="javascript:;" v-on:click="openUrl('https://developer.huawei.com/consumer/cn/doc/distribution/content/themes-engine-overview-0000001054588463')">主题开发文档</a>
+                    <a href="javascript:;" v-on:click="openUrl('https://developer.huawei.com/consumer/cn/doc/Tools-Library/theme_download-0000001050424897')">主题开发工具</a>
                     <a href="javascript:;" v-on:click="reload">重新加载框架</a>
                     <a href="javascript:;" v-on:click="seelog">查看程序日志</a>
                     <a href="javascript:;" v-on:click="policy">软件许可协议</a>
@@ -36,13 +38,21 @@
         </div>
 
         <div class="copyright">
-            <div class="team">
+            <div>
                 <span>Powered by</span>
                 <a href="javascript:;" class="link-secondary" v-on:click="openUrl('https://dotnet.microsoft.com/')">.NET 7</a>
-                <span>& ZoomLa官方团队</span>
+                <span>& CefSharp</span>
             </div>
             <div>
-                <a href="javascript:;" class="link-secondary" v-on:click="openUrl('https://z01.com/')">ZoomLa官网</a>
+                <span>基于</span>
+                <a href="javascript:;" class="link-secondary" v-on:click="openUrl('https://ziti163.com/')">逐浪字库</a>
+                <span>与</span>
+                <a href="javascript:;" class="link-secondary" v-on:click="openUrl('https://ico.z01.com/')">zico图标</a>
+                <span>呈现∞</span>
+                <a href="javascript:;" class="link-secondary" v-on:click="openUrl('https://z01.com/')">Zoomla!逐浪CMS</a>
+                <span>官方技术支持</span>
+            </div>
+            <div>
                 <span>电话：13177777714</span>
                 <span>QQ：1799661890</span>
             </div>
@@ -56,12 +66,13 @@
             return {
                 hotkey: [
                     // {ctrl: true, alt: true, shift: false, win: false, other: "", name: ""},
-                    {ctrl: true, alt: true, shift: false, win: false, other: "数字0", name: "显示主窗口"},
-                    {ctrl: true, alt: true, shift: false, win: false, other: "数字1", name: "主题包同步"},
-                    {ctrl: true, alt: true, shift: false, win: false, other: "数字2", name: "手机推送工具"},
-                    {ctrl: true, alt: true, shift: false, win: false, other: "数字3", name: "主题包审计"},
-                    {ctrl: true, alt: true, shift: false, win: false, other: "数字4", name: "主题打包"},
-                    {ctrl: true, alt: true, shift: false, win: false, other: "数字5", name: "屏幕取色"},
+                    {ctrl: true, alt: true, shift: false, win: false, other: "数字1", name: "显示主窗口"},
+                    {ctrl: true, alt: true, shift: false, win: false, other: "数字2", name: "主题包同步"},
+                    {ctrl: true, alt: true, shift: false, win: false, other: "数字3", name: "手机推送工具"},
+                    {ctrl: true, alt: true, shift: false, win: false, other: "数字4", name: "主题包审计"},
+                    {ctrl: true, alt: true, shift: false, win: false, other: "数字5", name: "主题打包"},
+                    {ctrl: true, alt: true, shift: false, win: false, other: "数字6", name: "屏幕取色"},
+                    {ctrl: true, alt: true, shift: false, win: false, other: "数字7", name: "命令行版推送工具"},
                 ],
             };
         },
@@ -80,6 +91,9 @@
             },
             policy() {
                 csc("ShowPolicy");
+            },
+            test() {
+                CSharp.sayHello();
             },
         },
     }
@@ -103,8 +117,8 @@
 .hbtns>a{padding:.5rem 1.375rem; margin-bottom:.5rem; color:#6c757d; background:#f3f4f6; text-decoration:none; border-radius:.25rem; cursor:pointer;}
 .hbtns>a:last-child{margin-right:0;}
 
-.copyright{margin-bottom:1.5rem; font-size:.85rem; color:#343a40; text-align:center;}
-.copyright>div>*:not(:last-child){margin-right:.375rem;}
+.copyright{margin-bottom:1.5rem; font-size:.9rem; color:#343a40; text-align:center;}
+.copyright a{margin:0 .2rem;}
 .copyright>.team{font-size:1rem;}
 
 @media (min-width:920px) {

@@ -38,6 +38,7 @@ namespace ZoomlaHms.Common
         /// </summary>
         public static string WebRoot => Path.Combine(PathBase, "wwwroot");
 
+        private static string configFileDirectory = null;
         /// <summary>
         /// 配置文件目录
         /// </summary>
@@ -45,25 +46,31 @@ namespace ZoomlaHms.Common
         {
             get
             {
-                string path = Path.Combine(PathBase, "Config");
-                if (!Directory.Exists(path))
+                if (string.IsNullOrEmpty(configFileDirectory))
                 {
-                    Logging.Info(typeof(SystemPath), nameof(ConfigFileDirectory), "Missing config file directory, creating...");
-                    try
+                    string path = Path.Combine(PathBase, "Config");
+                    if (!Directory.Exists(path))
                     {
-                        Directory.CreateDirectory(path);
+                        Logging.Info("Missing config file directory, creating...");
+                        try
+                        {
+                            Directory.CreateDirectory(path);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logging.Error("Unable to create config file directory.", ex);
+                            throw;
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Logging.Error(typeof(SystemPath), nameof(ConfigFileDirectory), "Unable to create config file directory.", ex);
-                        throw;
-                    }
+
+                    configFileDirectory = path;
                 }
 
-                return path;
+                return configFileDirectory;
             }
         }
 
+        private static string tempFileDirectory;
         /// <summary>
         /// 临时文件目录
         /// </summary>
@@ -71,25 +78,31 @@ namespace ZoomlaHms.Common
         {
             get
             {
-                string path = Path.Combine(PathBase, "Temp");
-                if (!Directory.Exists(path))
+                if (string.IsNullOrEmpty(tempFileDirectory))
                 {
-                    Logging.Info(typeof(SystemPath), nameof(TempFileDirectory), "Missing temporary file directory, creating...");
-                    try
+                    string path = Path.Combine(PathBase, "Temp");
+                    if (!Directory.Exists(path))
                     {
-                        Directory.CreateDirectory(path);
+                        Logging.Info("Missing temporary file directory, creating...");
+                        try
+                        {
+                            Directory.CreateDirectory(path);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logging.Error("Unable to create temporary file directory.", ex);
+                            throw;
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Logging.Error(typeof(SystemPath), nameof(TempFileDirectory), "Unable to create temporary file directory.", ex);
-                        throw;
-                    }
+
+                    tempFileDirectory = path;
                 }
 
-                return path;
+                return tempFileDirectory;
             }
         }
 
+        private static string externalToolsDirectory = null;
         /// <summary>
         /// 扩展工具目录
         /// </summary>
@@ -97,25 +110,31 @@ namespace ZoomlaHms.Common
         {
             get
             {
-                string path = Path.Combine(PathBase, "Tools");
-                if (!Directory.Exists(path))
+                if (string.IsNullOrEmpty(externalToolsDirectory))
                 {
-                    Logging.Info(typeof(SystemPath), nameof(ExternalToolsDirectory), "Missing external tools directory, creating...");
-                    try
+                    string path = Path.Combine(PathBase, "Tools");
+                    if (!Directory.Exists(path))
                     {
-                        Directory.CreateDirectory(path);
+                        Logging.Info("Missing external tools directory, creating...");
+                        try
+                        {
+                            Directory.CreateDirectory(path);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logging.Error("Unable to create external tools directory.", ex);
+                            throw;
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Logging.Error(typeof(SystemPath), nameof(ExternalToolsDirectory), "Unable to create external tools directory.", ex);
-                        throw;
-                    }
+
+                    externalToolsDirectory = path;
                 }
 
-                return path;
+                return externalToolsDirectory;
             }
         }
 
+        private static string appLogsDirectory = null;
         /// <summary>
         /// 日志文件目录
         /// </summary>
@@ -123,22 +142,27 @@ namespace ZoomlaHms.Common
         {
             get
             {
-                string path = Path.Combine(PathBase, "Logs");
-                if (!Directory.Exists(path))
+                if (string.IsNullOrEmpty(appLogsDirectory))
                 {
-                    Logging.Info(typeof(SystemPath), nameof(AppLogsDirectory), "Missing log file directory, creating...");
-                    try
+                    string path = Path.Combine(PathBase, "Logs");
+                    if (!Directory.Exists(path))
                     {
-                        Directory.CreateDirectory(path);
+                        Logging.Info("Missing log file directory, creating...");
+                        try
+                        {
+                            Directory.CreateDirectory(path);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logging.Error("Unable to create log file directory.", ex);
+                            throw;
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Logging.Error(typeof(SystemPath), nameof(AppLogsDirectory), "Unable to create log file directory.", ex);
-                        throw;
-                    }
+
+                    appLogsDirectory = path;
                 }
 
-                return path;
+                return appLogsDirectory;
             }
         }
     }

@@ -18,9 +18,8 @@ namespace ZoomlaHms.JsEvent.Implements
     {
         public string ChooseThemeFolder()
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            App.CreateOpenFileDialogInvoke(dialog =>
             {
-                CommonOpenFileDialog dialog = new CommonOpenFileDialog();
                 dialog.IsFolderPicker = true;
                 if (string.IsNullOrEmpty(config.ThemeFolder) || !Directory.Exists(config.ThemeFolder))
                 {
@@ -34,12 +33,10 @@ namespace ZoomlaHms.JsEvent.Implements
                 {
                     dialog.InitialDirectory = config.ThemeFolder;
                 }
-
-                if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-                {
-                    config.ThemeFolder = dialog.FileName;
-                    config.SaveConfigToFile();
-                }
+            }).Invoke(dialog =>
+            {
+                config.ThemeFolder = dialog.FileName;
+                config.SaveConfigToFile();
             });
 
             return config.ThemeFolder;
@@ -47,20 +44,17 @@ namespace ZoomlaHms.JsEvent.Implements
 
         public string ChooseThemeExportFolder()
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            App.CreateOpenFileDialogInvoke(dialog =>
             {
-                CommonOpenFileDialog dialog = new CommonOpenFileDialog();
                 dialog.IsFolderPicker = true;
                 if (string.IsNullOrEmpty(config.ThemeExportFolder) || !Directory.Exists(config.ThemeExportFolder))
                 { dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments); }
                 else
                 { dialog.InitialDirectory = config.ThemeExportFolder; }
-
-                if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-                {
-                    config.ThemeExportFolder = dialog.FileName;
-                    config.SaveConfigToFile();
-                }
+            }).Invoke(dialog =>
+            {
+                config.ThemeExportFolder = dialog.FileName;
+                config.SaveConfigToFile();
             });
 
             return config.ThemeExportFolder;
@@ -172,7 +166,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!File.Exists(moduleName))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_describePhone), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -190,7 +184,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 }
                 catch (Exception ex)
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_describePhone), $"Cannot change '{moduleName}' file content.", ex);
+                    Logging.Warning($"Cannot change '{moduleName}' file content.", ex);
                     zipfile.Add(modulePath, moduleName);
                 }
             }
@@ -201,7 +195,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!File.Exists(moduleName))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_describeTablet), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -219,7 +213,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 }
                 catch (Exception ex)
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_describeTablet), $"Cannot change '{moduleName}' file content.", ex);
+                    Logging.Warning($"Cannot change '{moduleName}' file content.", ex);
                     zipfile.Add(modulePath, moduleName);
                 }
             }
@@ -230,7 +224,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!File.Exists(moduleName))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_describeFoldable), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -248,7 +242,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 }
                 catch (Exception ex)
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_describeFoldable), $"Cannot change '{moduleName}' file content.", ex);
+                    Logging.Warning($"Cannot change '{moduleName}' file content.", ex);
                     zipfile.Add(modulePath, moduleName);
                 }
             }
@@ -259,7 +253,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_unlockDynamic), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -272,7 +266,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_unlockMagazine), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -285,7 +279,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_unlockSlide), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -298,7 +292,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_unlockVideo), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -311,7 +305,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_unlockVr), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -324,7 +318,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_wallpaperPhone), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -337,7 +331,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_wallpaperTablet), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -350,7 +344,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_wallpaperFoldable), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -363,7 +357,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_contacts), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -379,7 +373,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zipfile.Add(tempZipPath, moduleName);
@@ -391,7 +385,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_incallui), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -407,7 +401,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zipfile.Add(tempZipPath, moduleName);
@@ -419,7 +413,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_mms), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -435,7 +429,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zipfile.Add(tempZipPath, moduleName);
@@ -447,7 +441,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_phone), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -463,7 +457,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zipfile.Add(tempZipPath, moduleName);
@@ -475,7 +469,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_telecom), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -491,7 +485,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zipfile.Add(tempZipPath, moduleName);
@@ -503,7 +497,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_systemui), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -519,7 +513,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zipfile.Add(tempZipPath, moduleName);
@@ -531,7 +525,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_launcher), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -547,7 +541,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         tempZip.Delete(comres + "/");
                         tempZip.Add(comresDir, comres);
                     }
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zipfile.Add(tempZipPath, moduleName);
@@ -559,7 +553,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_recorder), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -567,7 +561,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 using (ZipDocument tempZip = new ZipDocument(tempZipPath))
                 {
                     tempZip.Add(modulePath);
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zipfile.Add(tempZipPath, moduleName);
@@ -579,7 +573,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_famanager), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -587,7 +581,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 using (ZipDocument tempZip = new ZipDocument(tempZipPath))
                 {
                     tempZip.Add(modulePath);
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zipfile.Add(tempZipPath, moduleName);
@@ -599,7 +593,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_icons), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -607,7 +601,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 using (ZipDocument tempZip = new ZipDocument(tempZipPath))
                 {
                     tempZip.Add(modulePath);
-                    tempZip.SaveChangesToFile();
+                    tempZip.Save();
                 }
 
                 zipfile.Add(tempZipPath, moduleName);
@@ -619,7 +613,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_widget), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -632,7 +626,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_previewPhone), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -645,7 +639,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_previewTablet), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -658,7 +652,7 @@ namespace ZoomlaHms.JsEvent.Implements
                 string modulePath = Path.Combine(pakcfg.ThemeFolder, moduleName);
                 if (!Directory.Exists(modulePath))
                 {
-                    Logging.Warning(typeof(ThemePackFactory), nameof(Pack_previewFoldable), $"'{moduleName}' is missing.");
+                    Logging.Warning($"'{moduleName}' is missing.");
                     return;
                 }
 
@@ -693,7 +687,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
             public static void Phone_largeScope(ThemePackConfig pakcfg)
@@ -752,7 +746,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
             public static void Phone_lockScreen(ThemePackConfig pakcfg)
@@ -795,7 +789,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
             public static void Phone_smallScope(ThemePackConfig pakcfg)
@@ -844,7 +838,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
 
@@ -872,7 +866,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
             public static void Foldable_largeScope(ThemePackConfig pakcfg)
@@ -921,7 +915,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
             public static void Foldable_lockScreen(ThemePackConfig pakcfg)
@@ -964,7 +958,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
             public static void Foldable_smallScope(ThemePackConfig pakcfg)
@@ -1013,7 +1007,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
 
@@ -1041,7 +1035,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
             public static void Tablet_largeScope(ThemePackConfig pakcfg)
@@ -1090,7 +1084,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
             public static void Tablet_lockScreen(ThemePackConfig pakcfg)
@@ -1133,7 +1127,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
             public static void Tablet_smallScope(ThemePackConfig pakcfg)
@@ -1182,7 +1176,7 @@ namespace ZoomlaHms.JsEvent.Implements
                         break;
                 }
 
-                zip.SaveChangesToFile();
+                zip.Save();
             }
 
 

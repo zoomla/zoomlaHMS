@@ -108,8 +108,8 @@
     <DockPanel>
         <Grid DockPanel.Dock="Bottom" Height="50" Background="#f8f9fa">
             <Button x:Name="CloseButton" VerticalAlignment="Center" HorizontalAlignment="Right" Width="70" Height="30" Cursor="Hand" Content="关闭 (C)" Margin="0 0 10 0" Click="CloseButton_Click"></Button>
-            <Button x:Name="RejectButton" VerticalAlignment="Center" HorizontalAlignment="Right" Width="110" Height="30" Cursor="Hand" Content="拒绝协议并退出 (Q)" Margin="0 0 130 0" Click="RejectButton_Click"></Button>
-            <Button x:Name="AcceptButton" VerticalAlignment="Center" HorizontalAlignment="Right" Width="110" Height="30" Cursor="Hand" Content="同意协议并继续 (A)" Margin="0 0 10 0" Click="AcceptButton_Click"></Button>
+            <Button x:Name="RejectButton" VerticalAlignment="Center" HorizontalAlignment="Right" Width="120" Height="30" Cursor="Hand" Content="拒绝协议并退出 (Q)" Margin="0 0 140 0" Click="RejectButton_Click"></Button>
+            <Button x:Name="AcceptButton" VerticalAlignment="Center" HorizontalAlignment="Right" Width="120" Height="30" Cursor="Hand" Content="同意协议并继续 (A)" Margin="0 0 10 0" Click="AcceptButton_Click"></Button>
         </Grid>
 
         <RichTextBox Style="{DynamicResource RichTextBoxStyle1}" x:Name="Content" IsReadOnly="True" BorderThickness="0" FontSize="14"></RichTextBox>
