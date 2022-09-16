@@ -17,13 +17,12 @@
 ![图片名称](images/bingd.png)
 ![图片名称](images/017.png)
 
-<video src="images/1.mp4" width="300" controls autoplay />
+<video id="video" controls="" preload="none" poster="作者(图片地址)">
+<source id="mp4" src="images/1.mp4" type="video/mp4">
+</video>
 
 
-作者：owsieman
-链接：https://ld246.com/article/1530267201034
-来源：链滴
-协议：CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/
+
 
 #### 介绍
 {**以下是 Gitee 平台说明，您可以替换此简介**
