@@ -14,6 +14,7 @@
 
 <img src="images/bingd.png" />
 
+![图片名称](images/bingd.png)
 
 
 #### 介绍
