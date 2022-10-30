@@ -32,8 +32,13 @@
 - 取色工具
 - 主题审计
 - 开放免费、专为中国主题开发工作者与设计师们而研发的工具。
+- 支持华为、小米、荣耀、oppo、vivo全渠道手机主题开发支持
+- 支持华为字体、vivo字体发布工具
+- 提供丰富的技术秘笈
 
-提示： gitee与github版本可能不是最新版本，最新版本请移步 www.z01.com/hw 获取
+![捐赠码](images/a01.jpg)
+
+提示： gitee与github发行版本可能不是最新版本，最新版本请移步 www.z01.com/hw 获取
 
 ## 软件架构
 
@@ -85,6 +90,16 @@ QQ群： 点击链接加入群聊【逐浪CMS官方web字体主题】：https://
 
 ## 界面欣赏
 
+![界面欣赏](images/a00.jpg)
+![界面欣赏](images/a01.jpg)
+![界面欣赏](images/a02.jpg)
+![界面欣赏](images/a03.jpg)
+![界面欣赏](images/a04.jpg)
+![界面欣赏](images/a05.jpg)
+![界面欣赏](images/a06.jpg)
+![界面欣赏](images/a07.jpg)
+![界面欣赏](images/a08.jpg)
+![界面欣赏](images/a09.jpg)
 ![界面欣赏](images/01.jpg)
 ![界面欣赏](images/02.jpg)
 ![界面欣赏](images/03.jpg)
